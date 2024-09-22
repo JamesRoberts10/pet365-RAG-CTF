@@ -13,13 +13,4 @@ Question: {question}
 
 Context: {context} 
 
-Answer:""
-
-combined_prompt = """
-Human: You are an assistant for answering questions based on provided context and chat history (if available). Use the following information to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
-
-{chat_history}
-Question: {question}
-Context: {context}
-
 Answer:"""

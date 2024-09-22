@@ -1,5 +1,5 @@
 import gradio as gr
-from controllers.ai_utils import streaming_respond
+from controllers.ai_utils import query
 
 
 def create_initial_interface(task_type):
@@ -9,12 +9,7 @@ def create_initial_interface(task_type):
         )
 
     with gr.Row():
-        text_input = gr.Textbox(label="Input", placeholder="YouTube URL / Website URL")
-
-    with gr.Row():
-        file_input = gr.File(label="Or upload a file", elem_classes="compact-file")
-        file_input.file_types = [".pdf", ".docx"]
-        file_input.type = "filepath"
+        text_input = gr.Textbox(label="Input", placeholder="Enter your question here")
 
     with gr.Row():
         submit_btn = gr.Button("Submit")
@@ -30,31 +25,22 @@ def create_initial_interface(task_type):
     def show_output(*args):
         return {output_row: gr.update(visible=True)}
 
+    def stream_output(text_input):
+        full_response = ""
+        for chunk in query(text_input):
+            full_response += chunk
+            yield full_response
+
     submit_btn.click(fn=show_output, inputs=[], outputs=[output_row], queue=False).then(
-        fn=streaming_respond,
-        inputs=[text_input, llm_dropdown],
-        outputs=output_box,
-        api_name="extract_ideas",
+        fn=stream_output, inputs=[text_input], outputs=[output_box], api_name="query"
     )
     text_input.submit(
         fn=show_output, inputs=[], outputs=[output_row], queue=False
     ).then(
-        fn=streaming_respond,
-        inputs=[text_input, llm_dropdown],
-        outputs=output_box,
-        api_name="extract_ideas2",
+        fn=stream_output, inputs=[text_input], outputs=[output_box], api_name="query"
     )
 
-    file_input.upload(
-        fn=show_output, inputs=[], outputs=[output_row], queue=False
-    ).then(
-        fn=streaming_respond,
-        inputs=[file_input, llm_dropdown],
-        outputs=output_box,
-        api_name="extract_file_ideas",
-    )
-
-    return text_input, file_input, llm_dropdown, submit_btn, output_box
+    return text_input, llm_dropdown, submit_btn, output_box
 
 
 theme = gr.themes.Monochrome(
@@ -66,9 +52,6 @@ theme = gr.themes.Monochrome(
     button_secondary_background_fill_hover_dark="*neutral_500",
     button_cancel_background_fill_hover_dark="*neutral_500",
 )
-
-with gr.Blocks(theme=theme) as demo:
-    ...
 
 
 def init_interface():
@@ -123,8 +106,8 @@ def init_interface():
             """,
     ) as demo:
         with gr.Column(elem_classes="root-container"):
-            gr.Markdown("# MEGA AI")
+            gr.Markdown("# Pet365")
 
-            create_initial_interface("Extract Ideas")
+            create_initial_interface("Query")
 
     return demo

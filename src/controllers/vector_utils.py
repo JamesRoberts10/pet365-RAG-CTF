@@ -80,9 +80,10 @@ def prepare_documents(directory: str) -> list[Document]:
     print(f"Total documents loaded: {len(documents)}")
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=200,
+        chunk_size=512,
+        chunk_overlap=50,
         length_function=len,
+        separators=["\n\n", "\n", " ", ""],
     )
     split_docs = text_splitter.split_documents(documents)
     print(f"Total chunks after splitting: {len(split_docs)}")
