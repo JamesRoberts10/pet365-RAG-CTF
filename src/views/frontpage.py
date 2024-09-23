@@ -9,38 +9,93 @@ def create_initial_interface(task_type):
         )
 
     with gr.Row():
-        text_input = gr.Textbox(label="Input", placeholder="Enter your question here")
-
-    with gr.Row():
-        submit_btn = gr.Button("Submit")
-
-    with gr.Row(visible=False) as output_row:
-        output_box = gr.Textbox(
-            label="",
-            show_label=False,
-            interactive=False,
-            elem_classes="expanding-output",
+        initial_input = gr.Textbox(
+            label="Input",  # Set the label to "Input"
+            placeholder="Enter your question here",
         )
 
-    def show_output(*args):
-        return {output_row: gr.update(visible=True)}
+    with gr.Row():
+        initial_submit_btn = gr.Button("Submit")
 
-    def stream_output(text_input):
-        full_response = ""
-        for chunk in query(text_input):
-            full_response += chunk
-            yield full_response
-
-    submit_btn.click(fn=show_output, inputs=[], outputs=[output_row], queue=False).then(
-        fn=stream_output, inputs=[text_input], outputs=[output_box], api_name="query"
+    chatbot = gr.Chatbot(label="Chat History", visible=False)
+    chat_input = gr.Textbox(
+        placeholder="Reply to Pauwde...",
+        visible=False,
+        label=None,
     )
-    text_input.submit(
-        fn=show_output, inputs=[], outputs=[output_row], queue=False
+    chat_submit_btn = gr.Button("Send", visible=False)
+
+    def show_chat_interface(message):
+        return {
+            initial_input: gr.update(visible=False),
+            initial_submit_btn: gr.update(visible=False),
+            chatbot: gr.update(visible=True, value=[[message, ""]]),
+            chat_input: gr.update(visible=True, label="Input"),  # Set label to "Input"
+            chat_submit_btn: gr.update(visible=True),
+        }
+
+    def chat_response(message, history):
+        history.append((message, ""))
+        for chunk in query(message):
+            history[-1] = (message, history[-1][1] + chunk)
+            yield history, gr.update(
+                value="",  # Clear the input value
+                placeholder="Reply to Pauwde...",  # Set the placeholder
+            )
+        return
+
+    initial_submit_btn.click(
+        fn=show_chat_interface,
+        inputs=[initial_input],
+        outputs=[
+            initial_input,
+            initial_submit_btn,
+            chatbot,
+            chat_input,
+            chat_submit_btn,
+        ],
     ).then(
-        fn=stream_output, inputs=[text_input], outputs=[output_box], api_name="query"
+        fn=chat_response,
+        inputs=[initial_input, chatbot],
+        outputs=[chatbot, chat_input],  # Add chat_input to outputs
     )
 
-    return text_input, llm_dropdown, submit_btn, output_box
+    initial_input.submit(
+        fn=show_chat_interface,
+        inputs=[initial_input],
+        outputs=[
+            initial_input,
+            initial_submit_btn,
+            chatbot,
+            chat_input,
+            chat_submit_btn,
+        ],
+    ).then(
+        fn=chat_response,
+        inputs=[initial_input, chatbot],
+        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+    )
+
+    chat_submit_btn.click(
+        fn=chat_response,
+        inputs=[chat_input, chatbot],
+        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+    )
+
+    chat_input.submit(
+        fn=chat_response,
+        inputs=[chat_input, chatbot],
+        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+    )
+
+    return (
+        initial_input,
+        llm_dropdown,
+        initial_submit_btn,
+        chatbot,
+        chat_input,
+        chat_submit_btn,
+    )
 
 
 theme = gr.themes.Monochrome(
@@ -76,32 +131,9 @@ def init_interface():
                     padding: 20px 6vw !important;
                 }
             }
-            .compact-file {
-                max-height: 25vh;
+            .chatbot {
+                height: 400px;
                 overflow-y: auto;
-            }
-            .compact-file > .file-preview {
-                max-height: 25vh;
-            }
-            .compact-file > .file-preview img {
-                max-height: 25vh;
-            }
-            .expanding-output {
-                margin-top: 20px;
-            }
-            .expanding-output textarea {
-                min-height: 100px;
-                max-height: 400px;
-                height: auto;
-                overflow-y: auto;
-                resize: none;
-                padding: 10px !important;
-                border: 1px solid rgba(0, 0, 0, 0.1) !important;
-                border-radius: 4px !important;
-                font-size: 14px !important;
-            }
-            .generating {
-                border: none;
             }
             """,
     ) as demo:
