@@ -29,18 +29,19 @@ def create_initial_interface(task_type):
         return {
             initial_input: gr.update(visible=False),
             initial_submit_btn: gr.update(visible=False),
-            chatbot: gr.update(visible=True, value=[[message, ""]]),
+            chatbot: gr.update(visible=True, value=[]),  # Changed to empty list
             chat_input: gr.update(visible=True, label="Input"),  # Set label to "Input"
             chat_submit_btn: gr.update(visible=True),
         }
 
     def chat_response(message, history):
-        history.append((message, ""))
+        history = history or []  # Ensure history is a list
+        history.append((message, ""))  # Add new message to history
         for chunk in query(message):
             history[-1] = (message, history[-1][1] + chunk)
             yield history, gr.update(
-                value="",  # Clear the input value
-                placeholder="Reply to Pauwde...",  # Set the placeholder
+                value="",
+                placeholder="Reply to Pauwde...",
             )
         return
 
