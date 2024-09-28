@@ -10,7 +10,7 @@ def create_initial_interface(task_type):
 
     with gr.Row():
         initial_input = gr.Textbox(
-            label="Input",  # Set the label to "Input"
+            label="Input",  
             placeholder="Enter your question here",
         )
 
@@ -29,14 +29,14 @@ def create_initial_interface(task_type):
         return {
             initial_input: gr.update(visible=False),
             initial_submit_btn: gr.update(visible=False),
-            chatbot: gr.update(visible=True, value=[]),  # Changed to empty list
-            chat_input: gr.update(visible=True, label="Input"),  # Set label to "Input"
+            chatbot: gr.update(visible=True, value=[]),  
+            chat_input: gr.update(visible=True, label="Input"), 
             chat_submit_btn: gr.update(visible=True),
         }
 
     def chat_response(message, history):
-        history = history or []  # Ensure history is a list
-        history.append((message, ""))  # Add new message to history
+        history = history or []  
+        history.append((message, ""))  
         for chunk in query(message):
             history[-1] = (message, history[-1][1] + chunk)
             yield history, gr.update(
@@ -58,7 +58,7 @@ def create_initial_interface(task_type):
     ).then(
         fn=chat_response,
         inputs=[initial_input, chatbot],
-        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+        outputs=[chatbot, chat_input], 
     )
 
     initial_input.submit(
@@ -74,19 +74,19 @@ def create_initial_interface(task_type):
     ).then(
         fn=chat_response,
         inputs=[initial_input, chatbot],
-        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+        outputs=[chatbot, chat_input],  
     )
 
     chat_submit_btn.click(
         fn=chat_response,
         inputs=[chat_input, chatbot],
-        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+        outputs=[chatbot, chat_input],  
     )
 
     chat_input.submit(
         fn=chat_response,
         inputs=[chat_input, chatbot],
-        outputs=[chatbot, chat_input],  # Add chat_input to outputs
+        outputs=[chatbot, chat_input], 
     )
 
     return (

@@ -19,14 +19,14 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 ENV_PATH = Path(__file__).parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
+# Load environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
-# We've already created the pet365 Pinecone database and indexed our documents.
-# Pinecone is a cloud-based vector database service that allows us to store and query our documents.
-# Importantly, we have split our documents into 1000 character chunks and indexed them separately.
+# We've already created the pet365 Pinecone database and indexed our documents in the vector_utils.py file.
+# Importantly, we have split our documents into 500 character chunks and indexed them separately.
 # This overcomes the context window limitation of LLMs and allows for more accurate and relevant responses.
 # The more data we feed into the LLM with our query, the less accurate (and more expensive) the responses become.
 # Chunking allows us to provide only the most relevant information to the LLM.
@@ -34,7 +34,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # First we initialize Pinecone, set the index name and the embedding model.
 # Think of this as simply connecting to the database for content retrieval.
 # We set the embedding model to OpenAI because that's what we used when we indexed our documents.
-# The embedding model is used to create an embedding of the query, which is a numerical (graph-based) representation of the query.
+# This time, the embedding model is used to create a numerical (graph-based) representation of the query.
 # It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding can be accurately compared to the document embeddings in the vector store.
 pc = Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index("pet365")
@@ -44,6 +44,7 @@ vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 # Next we create a retriever that uses our vector database
 # We specify search_type="similarity" and search_kwargs={"k": 5} to search for the 5 nearest neighbors in the vector store.
 retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
 
