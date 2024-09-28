@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
 from langchain_anthropic import ChatAnthropic
@@ -46,7 +47,43 @@ vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
+# As the frontend interface allows the user to select between different LLMs, we need to dynamically create the LLM instance based on the user's selection.
+# We could do this using a simple if statement but a better option is to use an object-oriented approach and create a class with methods for each LLM.
+# This allows us to easily add new LLM vendors or expand the model selection in the future.
+class llmObject:
+    """
+    The llmObject class is designed to encapsulate the initialisation of different
+    LLM chat interfaces. It provides methods to create instances of various LLM chat models with predefined configurations.
+
+    All models are configured with similar parameters:
+    - temperature: 0.5 (balances creativity and consistency)
+    - streaming: True (enables token-by-token response generation)
+
+    The class structure allows for easy addition of new LLM interfaces and
+    provides a consistent way to initialise different chat models throughout
+    the application.
+    """
+
+    def Claude(self):
+        return ChatAnthropic(
+            model="claude-3-5-sonnet-20240620",
+            temperature=0.5,
+            streaming=True,
+        )
+
+    def GPT(self):
+        return ChatOpenAI(
+            model_name="gpt-4o",
+            temperature=0.5,
+            streaming=True,
+        )
+
+    def Gemini(self):
+        return ChatGoogleGenerativeAI(
+            model="gemini-pro",
+            temperature=0.5,
+            streaming=True,
+        )
 
 
 # We will store the chat history for each session in a dictionary.
@@ -89,18 +126,24 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 # We use LangChain components to abstract and streamline the process of creating the LLM calls
 # This is our conversational retrieval-augmented generation (RAG) system.
-def query(query):
+def query(user_query, selected_llm):
+    try:
+        llm_instance = llmObject()
+        # This part retrieves the method from the llm_instance class object whose name matches the string in selected_llm. For example, if selected_llm is "Claude", it will retrieve the Claude method from the llmObject instance.
+        llm = getattr(llm_instance, selected_llm)()
+    except AttributeError:
+        raise ValueError(f"Unsupported LLM: {selected_llm}")
+
     # First we define our condense question prompt
     # This prompt is used to condense the user's question into a standalone question
     # The prompt is made up of a system message, the chat history, and a human message (the question)
     # The system prompt is stored in templates/prompts.py
     # Langchain handles the chat history for us using the MessagesPlaceholder
     # Note: We are just creating the prompt object here, not actually using it yet
-
     condense_question_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", CONDENSE_QUESTION_PROMPT),
-            MessagesPlaceholder("chat_history"),
+            MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
         ]
     )
@@ -121,7 +164,7 @@ def query(query):
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", QUESTION_PROMPT),
-            MessagesPlaceholder("chat_history"),
+            MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
         ]
     )
@@ -163,7 +206,7 @@ def query(query):
     # We use the stream method to store the response token by token, rather than waiting until the entire response is generated.
     # Remember, the LLM's job is simply to predict the next token in a sequence. The Stream method allows us to view this process in real-time.
     response = conversational_rag_chain.stream(
-        {"input": query}, {"configurable": {"session_id": "[1]"}}
+        {"input": user_query}, {"configurable": {"session_id": "[1]"}}
     )
 
     # Yielding the response in chunks allows us to display the response to the usertoken by token

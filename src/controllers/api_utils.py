@@ -14,9 +14,9 @@ def get_api_key_status():
     for key_name in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_GEMINI_API_KEY"]:
         key = os.getenv(key_name)
         if key:
-            status.append(f"{key_name} is set: {key[:5]}...")
+            status.append(f"{key_name} is set: {key[:7]}...")
         else:
-            status.append(f"No {key_name} is set")
+            status.append(f"{key_name} is not set, enter API key above")
     return "\n".join(status)
 
 
@@ -37,7 +37,7 @@ def set_api_keys(anthropic_key, openai_key, gemini_key):
         if key:
             os.environ[key_name] = key
             set_key(env_path, key_name, key)
-            status.append(f"{key_name} set successfully: {key[:5]}...")
+            status.append(f"{key_name} set successfully: {key[:7]}...")
         else:
             status.append(f"{key_name} Not currently set...")
 

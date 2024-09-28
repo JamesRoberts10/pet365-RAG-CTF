@@ -1,5 +1,42 @@
 import gradio as gr
 from controllers.ai_utils import query
+from controllers.api_utils import get_api_key_status, set_api_keys
+
+
+def create_api_key_interface(task_type):
+    with gr.Row():
+        anthropic_key_input = gr.Textbox(
+            label="Anthropic API Key",
+            placeholder="Enter your Anthropic API key",
+            type="password",
+        )
+        openai_key_input = gr.Textbox(
+            label="OpenAI API Key",
+            placeholder="Enter your OpenAI API key",
+            type="password",
+        )
+        gemini_key_input = gr.Textbox(
+            label="Google Gemini API Key",
+            placeholder="Enter your Google Gemini API key",
+            type="password",
+        )
+    with gr.Row():
+        set_keys_btn = gr.Button("Set All API Keys")
+    with gr.Row():
+        api_key_status = gr.Textbox(label="API Key Status", interactive=False, lines=3)
+
+    set_keys_btn.click(
+        fn=set_api_keys,
+        inputs=[anthropic_key_input, openai_key_input, gemini_key_input],
+        outputs=api_key_status,
+    )
+
+    refresh_btn = gr.Button("Refresh API Key Status")
+    refresh_btn.click(
+        fn=get_api_key_status,
+        inputs=[],
+        outputs=api_key_status,
+    )
 
 
 def create_initial_interface(task_type):
@@ -10,7 +47,7 @@ def create_initial_interface(task_type):
 
     with gr.Row():
         initial_input = gr.Textbox(
-            label="Input",  
+            label="Input",
             placeholder="Enter your question here",
         )
 
@@ -29,15 +66,15 @@ def create_initial_interface(task_type):
         return {
             initial_input: gr.update(visible=False),
             initial_submit_btn: gr.update(visible=False),
-            chatbot: gr.update(visible=True, value=[]),  
-            chat_input: gr.update(visible=True, label="Input"), 
+            chatbot: gr.update(visible=True, value=[]),
+            chat_input: gr.update(visible=True, label="Input"),
             chat_submit_btn: gr.update(visible=True),
         }
 
-    def chat_response(message, history):
-        history = history or []  
-        history.append((message, ""))  
-        for chunk in query(message):
+    def chat_response(message, history, llm):
+        history = history or []
+        history.append((message, ""))
+        for chunk in query(message, llm):
             history[-1] = (message, history[-1][1] + chunk)
             yield history, gr.update(
                 value="",
@@ -57,8 +94,8 @@ def create_initial_interface(task_type):
         ],
     ).then(
         fn=chat_response,
-        inputs=[initial_input, chatbot],
-        outputs=[chatbot, chat_input], 
+        inputs=[initial_input, chatbot, llm_dropdown],
+        outputs=[chatbot, chat_input],
     )
 
     initial_input.submit(
@@ -73,20 +110,20 @@ def create_initial_interface(task_type):
         ],
     ).then(
         fn=chat_response,
-        inputs=[initial_input, chatbot],
-        outputs=[chatbot, chat_input],  
+        inputs=[initial_input, chatbot, llm_dropdown],
+        outputs=[chatbot, chat_input],
     )
 
     chat_submit_btn.click(
         fn=chat_response,
-        inputs=[chat_input, chatbot],
-        outputs=[chatbot, chat_input],  
+        inputs=[chat_input, chatbot, llm_dropdown],
+        outputs=[chatbot, chat_input],
     )
 
     chat_input.submit(
         fn=chat_response,
-        inputs=[chat_input, chatbot],
-        outputs=[chatbot, chat_input], 
+        inputs=[chat_input, chatbot, llm_dropdown],
+        outputs=[chatbot, chat_input],
     )
 
     return (
@@ -141,6 +178,11 @@ def init_interface():
         with gr.Column(elem_classes="root-container"):
             gr.Markdown("# Pet365")
 
-            create_initial_interface("Query")
+            with gr.Tabs():
+                with gr.TabItem("Chat"):
+                    create_initial_interface("Chat")
+
+                with gr.TabItem("Set API Keys"):
+                    create_api_key_interface("Set API Keys")
 
     return demo
