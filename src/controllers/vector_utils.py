@@ -12,19 +12,42 @@ load_dotenv()
 # Load environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
+"""
+This module contains the code for indexing our documents into Pinecone.
 
-# This file contains the code to index our documents into Pinecone.
-# Pinecone is a cloud-based vector database service that allows us to store and query our documents using natural language Processing.
-# Embedding refers to the process of converting our documents into numerical (graph-based) representations.
-# This allows us to perform natural language based searches, where we can search for documents that are similar to a given query.
-# To make this process more efficient, we first split our documents into smaller chunks and then embed each chunk into a numerical space rather than embedding the entire document.
-# This ensures that we only retrieve the most relevant data for our query.
-# We'll use OpenAI's embedding API for our embedding model. To generate embeddings, we send our text to the API, which returns the corresponding vector.
-# The vector and corresponding text will be stored in our Pinecone database.
+Key Concepts:
+
+1. Chunking:
+   Documents are split into smaller text chunks before processing. This approach will improve later query 
+   response accuracy by allowing for the retrieval of only the most relevant data segments for a given query.
+
+2. Embedding:
+   Our text chunks are converted into numerical vector representations, which form the bases of our 
+   natural language-based similarity searches. Each chunk is represented as a list of numbers (a vector).
+   These numbers correspond to coordinates in a high-dimensional graph, where similar words or phrases 
+   are represented by vectors that are close together.
+    Example:
+        "cybersecurity" might be represented as [0.8, 0.6, 0.2...]
+        "hacking" might be [0.7, 0.5, 0.3...]
+        "baking" might be [0.1, 0.2, 0.9...]
+
+   In this example, "cybersecurity" and "hacking" have more similar vectors compared to "baking".
+   
+   We're using OpenAI's embedding api for this, which takes a text input and returns a numerical 
+   representation of the text.
+
+3. Pinecone Storage:
+   Both the vector embeddings and the original text chunks are stored in Pinecone. We'll use this 
+   cloud-based solution because it offers quick setup and eliminates the need for local database management.
+
+"""
+
+
+# TIP: If you're struggling to read the code, copy it into ChatGipity and ask it to explain it to you (Don't do this with work code)
 
 
 # First we initialize Pinecone, set the index name and the embedding model.
-# An index is just a database of vectors.
+# An index is just a database containing text chunks and their corresponding vectors.
 pc = Pinecone(api_key=PINECONE_API_KEY)
 embeddings = OpenAIEmbeddings()
 index_name = "pet365"
@@ -49,7 +72,7 @@ except Exception as e:
 
 
 # This helper function is used to clean the text of each page of our documents.
-# This is necessary because the text extracted from PDFs often contains formatting characters that are not relevant to the content.
+# Text extracted from PDFs often contains formatting characters that are not relevant to the content.
 def clean_text(text):
     # Remove newlines
     text = text.replace("\n", " ")
@@ -66,7 +89,6 @@ def prepare_documents(directory: str) -> list[Document]:
     # This list will store the documents after they have been cleaned and split into smaller chunks.
     documents = []
     # We use os.listdir to get a list of all files in the specified directory.
-    # We then filter out the files that are not PDFs.
     # For each PDF file, we use PyPDFLoader to load the content and store the resulting list of page objects in file_documents.
     # We then loop through each page, clean the text using our clean_text function and add it to the documents list.
     for filename in os.listdir(directory):
@@ -104,7 +126,7 @@ def prepare_documents(directory: str) -> list[Document]:
     # We set the chunk size to 512 characters and the overlap to 50 characters.
     # It's important to have an overlap to prevent text from being cut off abruptly.
     # The "separators" parameter instructs the splitter to look for any of the specified strings in the text to indicate where the chunks should be split.
-    # Basically, we're saying: split the text into 500 character chunks, but look for delimiters to split at if possible.
+    # Basically, we're saying: Split the text into 512 character chunks, but look for delimiters to split at if possible.
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=512,
         chunk_overlap=50,
@@ -118,7 +140,7 @@ def prepare_documents(directory: str) -> list[Document]:
 
 
 # Now to index the documents into Pinecone.
-# We call the prepare_documents function on our directory of PDF files to get a list of chunk objects.
+# We call the prepare_documents function on our directory of PDF files to get a list of chunk objects from the content of the PDFs.
 # We then use PineconeVectorStore to index the documents into Pinecone.
 def index_documents(directory: str) -> bool:
     print(f"Starting document indexing process for directory: {directory}")
@@ -140,5 +162,7 @@ def index_documents(directory: str) -> bool:
     return True
 
 
-# Call the function to index the documents in the ragdocs directory
+# Call the function to index the documents in the ragdocs directory (There's no need to run this as I've already indexed the documents)
 index = index_documents("../ragdocs")
+
+# Check out the ai_utils.py file to see how to query the index we just created.
