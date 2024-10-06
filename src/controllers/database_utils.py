@@ -1,0 +1,39 @@
+import os
+from dotenv import set_key, load_dotenv
+from pathlib import Path
+
+
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
+
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX = os.getenv("PINECONE_INDEX")
+
+
+def set_pinecone_api_key(api_key):
+    set_key(env_path, "PINECONE_API_KEY", api_key)
+    return "Pinecone API key has been set."
+
+
+def set_pinecone_index(index_name):
+    set_key(env_path, "PINECONE_INDEX", index_name)
+    return f"Pinecone index set to: {index_name}"
+
+
+def show_current_config():
+    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    PINECONE_INDEX = os.getenv("PINECONE_INDEX")
+
+    api_key_status = (
+        f"Current Pinecone API Key: {PINECONE_API_KEY}"
+        if PINECONE_API_KEY
+        else "Pinecone API key not set. Enter it above"
+    )
+
+    index_status = (
+        f"Current Pinecone Index: {PINECONE_INDEX}"
+        if PINECONE_INDEX
+        else "Pinecone Index not set."
+    )
+
+    return f"{api_key_status}\n{index_status}"

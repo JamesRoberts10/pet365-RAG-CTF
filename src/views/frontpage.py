@@ -1,6 +1,11 @@
 import gradio as gr
 from controllers.ai_utils import query
 from controllers.api_utils import get_api_key_status, set_api_keys
+from controllers.database_utils import (
+    set_pinecone_api_key,
+    show_current_config,
+    set_pinecone_index,
+)
 
 
 def create_api_key_interface(task_type):
@@ -169,17 +174,6 @@ def create_database_config_interface():
             label="Database Config Status", interactive=False, lines=3
         )
 
-    # You'll need to implement these functions in api_utils.py or vector_utils.py
-    def set_pinecone_api_key(api_key):
-        # Implement the logic to set the Pinecone API key
-        # Return a status message
-        return "Pinecone API key has been set."
-
-    def show_current_config():
-        # Implement the logic to retrieve and display the current database configuration
-        # Return a string with the current configuration
-        return "Current Pinecone API Key: ****\nCurrent Pinecone Index: pet365"
-
     set_pinecone_key_btn.click(
         fn=set_pinecone_api_key,
         inputs=[pinecone_key_input],
@@ -191,12 +185,6 @@ def create_database_config_interface():
         inputs=[],
         outputs=database_config_status,
     )
-
-    # Add a function to handle index selection
-    def set_pinecone_index(index_name):
-        # Implement the logic to set the Pinecone index
-        # Return a status message
-        return f"Pinecone index set to: {index_name}"
 
     index_dropdown.change(
         fn=set_pinecone_index,

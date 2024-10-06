@@ -106,21 +106,6 @@ Key Concepts:
 """
 
 
-# First we initialize Pinecone and set the index name.
-# Think of this as simply connecting to the database we created in the vector_utils.py file for content retrieval.
-# This time, the embedding model is used to create a vector representation of the user'squery.
-# It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding
-# can be accurately compared to the document embeddings in the vector database.
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index = pc.Index("pet365")
-embeddings = OpenAIEmbeddings()
-vector_store = PineconeVectorStore(index=index, embedding=embeddings)
-
-# Next we create a retriever object that uses our vector database to retrieve text chunks based on user queries.
-# We specify search_type="similarity" and search_kwargs={"k": 5} to search for the 5 nearest neighbors in the vector database.
-retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 5})
-
-
 # As the frontend interface allows the user to select between different LLMs, we need to dynamically create the LLM instance based on the user's selection.
 # We could do this using a simple if statement but a better option is to use an object-oriented approach and create a class with methods for each LLM.
 # This allows us to easily add new LLM vendors or expand the model selection in the future.
@@ -225,6 +210,22 @@ def query(user_query, selected_llm):
         llm = getattr(llm_instance, selected_llm)()
     except AttributeError:
         raise ValueError(f"Unsupported LLM: {selected_llm}")
+
+    # First we initialize Pinecone and set the index name.
+    # Think of this as simply connecting to the database we created in the vector_utils.py file for content retrieval.
+    # This time, the embedding model is used to create a vector representation of the user'squery.
+    # It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding
+    # can be accurately compared to the document embeddings in the vector database.
+    pc = Pinecone(api_key=PINECONE_API_KEY)
+    index = pc.Index("pet365")
+    embeddings = OpenAIEmbeddings()
+    vector_store = PineconeVectorStore(index=index, embedding=embeddings)
+
+    # Next we create a retriever object that uses our vector database to retrieve text chunks based on user queries.
+    # We specify search_type="similarity" and search_kwargs={"k": 5} to search for the 5 nearest neighbors in the vector database.
+    retriever = vector_store.as_retriever(
+        search_type="similarity", search_kwargs={"k": 5}
+    )
 
     # Then we define our condense question prompt. Note: We are just creating the prompt object here, not actually using it yet
     # Langchain's MessagesPlaceholder retreives the chat history from the get_session_history function and stores it in the variable "chat_history"
