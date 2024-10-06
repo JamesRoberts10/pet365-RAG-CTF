@@ -109,7 +109,8 @@ Key Concepts:
 # First we initialize Pinecone and set the index name.
 # Think of this as simply connecting to the database we created in the vector_utils.py file for content retrieval.
 # This time, the embedding model is used to create a vector representation of the user'squery.
-# It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding can be accurately compared to the document embeddings in the vector database.
+# It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding
+# can be accurately compared to the document embeddings in the vector database.
 pc = Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index("pet365")
 embeddings = OpenAIEmbeddings()

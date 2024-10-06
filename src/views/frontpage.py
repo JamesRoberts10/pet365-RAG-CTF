@@ -147,6 +147,64 @@ theme = gr.themes.Monochrome(
 )
 
 
+def create_database_config_interface():
+    with gr.Row():
+        pinecone_key_input = gr.Textbox(
+            label="Pinecone API Key",
+            placeholder="Enter your Pinecone API key",
+            type="password",
+        )
+    with gr.Row():
+        set_pinecone_key_btn = gr.Button("Set Pinecone API Key")
+    with gr.Row():
+        index_dropdown = gr.Dropdown(
+            label="Pinecone Index",
+            choices=["pet365", "Super Secret Database"],
+            value="pet365",
+        )
+    with gr.Row():
+        show_config_btn = gr.Button("Show Current Database Config")
+    with gr.Row():
+        database_config_status = gr.Textbox(
+            label="Database Config Status", interactive=False, lines=3
+        )
+
+    # You'll need to implement these functions in api_utils.py or vector_utils.py
+    def set_pinecone_api_key(api_key):
+        # Implement the logic to set the Pinecone API key
+        # Return a status message
+        return "Pinecone API key has been set."
+
+    def show_current_config():
+        # Implement the logic to retrieve and display the current database configuration
+        # Return a string with the current configuration
+        return "Current Pinecone API Key: ****\nCurrent Pinecone Index: pet365"
+
+    set_pinecone_key_btn.click(
+        fn=set_pinecone_api_key,
+        inputs=[pinecone_key_input],
+        outputs=database_config_status,
+    )
+
+    show_config_btn.click(
+        fn=show_current_config,
+        inputs=[],
+        outputs=database_config_status,
+    )
+
+    # Add a function to handle index selection
+    def set_pinecone_index(index_name):
+        # Implement the logic to set the Pinecone index
+        # Return a status message
+        return f"Pinecone index set to: {index_name}"
+
+    index_dropdown.change(
+        fn=set_pinecone_index,
+        inputs=[index_dropdown],
+        outputs=database_config_status,
+    )
+
+
 def init_interface():
     with gr.Blocks(
         theme=theme,
@@ -182,7 +240,10 @@ def init_interface():
                 with gr.TabItem("Chat"):
                     create_initial_interface("Chat")
 
-                with gr.TabItem("Set API Keys"):
+                with gr.TabItem("LLM Config"):
                     create_api_key_interface("Set API Keys")
+
+                with gr.TabItem("Database Config"):
+                    create_database_config_interface()
 
     return demo
