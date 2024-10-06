@@ -149,9 +149,17 @@ class llmObject:
             api_key=self.get_api_key("ANTHROPIC_API_KEY"),
         )
 
-    def GPT(self):
+    def GPT4o(self):
         return ChatOpenAI(
             model_name="gpt-4o",
+            temperature=0.5,
+            streaming=True,
+            api_key=self.get_api_key("OPENAI_API_KEY"),
+        )
+
+    def GPT3_5(self):
+        return ChatOpenAI(
+            model_name="gpt-3.5-turbo",
             temperature=0.5,
             streaming=True,
             api_key=self.get_api_key("OPENAI_API_KEY"),

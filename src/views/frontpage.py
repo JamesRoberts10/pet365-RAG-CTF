@@ -72,7 +72,9 @@ def create_api_key_interface(task_type):
 def create_initial_interface(task_type):
     with gr.Row():
         llm_dropdown = gr.Dropdown(
-            choices=["GPT", "Claude", "Gemini"], label="Select Your LLM", value="Claude"
+            choices=["GPT4o", "GPT3_5", "Claude", "Gemini"],
+            label="Select Your LLM",
+            value="Claude",
         )
 
     with gr.Row():
