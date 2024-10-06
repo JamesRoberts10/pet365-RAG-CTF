@@ -23,7 +23,6 @@ def get_api_key_status():
 def set_api_keys(anthropic_key, openai_key, gemini_key):
     # Sets API keys for LLMs in the .env file
     # Assigned to the Set API Keys button in the Gradio front end
-    # Requires a restart of VS Code to take effect. Will try and figure this one out.
     # Builds a status message for each key state in the loop. outputs the full status with new lines.
 
     status = []

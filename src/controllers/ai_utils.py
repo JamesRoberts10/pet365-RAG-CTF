@@ -102,7 +102,7 @@ Key Concepts:
 
 
 # As the frontend interface allows the user to select between different LLMs, we need to dynamically create the LLM instance based on the user's selection.
-# We could do this using a simple if statement but a better option is to use an object-oriented approach and create a class with methods for each LLM.
+# We could do this using a simple if statement but a cleaner option is to use an object-oriented approach and create a class with methods for each LLM.
 # This allows us to easily add new LLM vendors or expand the model selection in the future.
 class llmObject:
     """
@@ -221,7 +221,7 @@ def query(user_query, selected_llm):
     except AttributeError:
         raise ValueError(f"Unsupported LLM: {selected_llm}")
 
-    # First we initialize Pinecone and set the index name.
+    # Then we initialise Pinecone and set the index name.
     # Think of this as simply connecting to the database we created in the vector_utils.py file for content retrieval.
     # This time, the embedding model is used to create a vector representation of the user'squery.
     # It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding
@@ -253,7 +253,7 @@ def query(user_query, selected_llm):
     # The qa prompt is used to create our question-answering prompt. Again, we are just creating the prompt object here, not actually using it yet
     # This time we use the user's input, chat history and retrieved text chunks for our prompt
     # All three variables are injected into the QUESTION_PROMPT which you can view in the templates/prompts.py file
-    # MessagesPlaceholder againstores the outputs back in our chat history dictionary
+    # MessagesPlaceholder again stores the outputs back in our chat history dictionary
 
     qa_prompt = ChatPromptTemplate.from_messages(
         [
@@ -266,7 +266,7 @@ def query(user_query, selected_llm):
     # The history aware retriever is used to perform document retrieval from the vector database
     # If chat history exists, it first passes the chat history and the user's question to the LLM via the condense_question_prompt we created above
     # The LLM uses the condense_question_prompt to create a standalone question as the output
-    # The retriever is then used to perform a similarity search using the new standalone question to find the 5 most relevant text chunks
+    # The retriever is then used to perform a similarity search on our pinecone database using the new standalone question to find the 5 most relevant text chunks
     # Note: Again, we are just creating the history aware retriever object here, not actually using it yet
     history_aware_retriever = create_history_aware_retriever(
         llm, retriever, condense_question_prompt
@@ -292,7 +292,7 @@ def query(user_query, selected_llm):
     # The LLM uses the condense_question_prompt to create a standalone question as the output
     # The retriever is then used to perform a similarity search using the new standalone question to find the 5 most relevant text chunks
     # It passes these text chunks to the QA chain we created earlier.
-    # This covers Action 2&3. Send to LLM for condensed question (skip if no history) > Retrieve top 5 most relevant text chunks based on the question
+    # This covers Action 2 & 3. Send to LLM for condensed question (skip if no history) > Retrieve top 5 most relevant text chunks based on the question
     retrieval_chain = create_retrieval_chain(history_aware_retriever, qa_chain)
 
     # The conversational_rag_chain takes the users input, retrieves the chat history and passes them to the retrieval chain above
@@ -319,6 +319,8 @@ def query(user_query, selected_llm):
             yield chunk["answer"]
 
 
+# This little helper function allows us to reload the environment variables when we make changes in the front end.
+# This ensures that any changes to the environment variables are reflected immediately.
 def reload_env_variables():
     load_dotenv(ENV_PATH, override=True)
     return "Environment variables reloaded."

@@ -7,12 +7,6 @@ env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path)
 
 
-# Remove these global variables
-# load_dotenv(env_path)
-# PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-# PINECONE_INDEX = os.getenv("PINECONE_INDEX")
-
-
 def set_pinecone_api_key(api_key):
     set_key(env_path, "PINECONE_API_KEY", api_key)
     return "Pinecone API key has been set."
@@ -40,7 +34,7 @@ def show_current_config():
     index_status = (
         f"Current Pinecone Index: {PINECONE_INDEX}"
         if PINECONE_INDEX
-        else "Pinecone Index not set."
+        else "Pinecone Index not set. Enter it above"
     )
 
     return f"{api_key_status}\n{index_status}"
