@@ -13,6 +13,9 @@ from pathlib import Path
 # Add this at the top of the file, after the imports
 env_path = Path(__file__).parent.parent.parent / ".env"
 
+# Add this global variable
+gpt3_5_message_shown = False
+
 
 # Add this new function to check if the Pinecone API key is set
 def check_api_keys():
@@ -70,6 +73,8 @@ def create_api_key_interface(task_type):
 
 
 def create_initial_interface(task_type):
+    global gpt3_5_message_shown
+
     with gr.Row():
         llm_dropdown = gr.Dropdown(
             choices=["GPT4o", "GPT3_5", "Claude", "Gemini"],
@@ -104,10 +109,22 @@ def create_initial_interface(task_type):
         }
 
     def chat_response(message, history, llm):
+        global gpt3_5_message_shown
         history = history or []
         history.append((message, ""))
+
+        if llm == "GPT3_5" and not gpt3_5_message_shown:
+            prepend_message = "Nice work! Using an older model is a good approach as the input sanitisation is often weaker. That is why you were using GPT3.5 right? FLAG{Gipity_Downgrade}\n\n"
+            gpt3_5_message_shown = True
+        else:
+            prepend_message = ""
+
         for chunk in query(message, llm):
-            history[-1] = (message, history[-1][1] + chunk)
+            if history[-1][1] == "":
+
+                history[-1] = (message, prepend_message + chunk)
+            else:
+                history[-1] = (message, history[-1][1] + chunk)
             yield history, gr.update(
                 value="",
                 placeholder="Reply to Pauwde...",
