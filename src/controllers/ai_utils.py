@@ -52,7 +52,8 @@ Key Concepts:
    Note that in a production environment, we'd want to use a database to store the chat history in order to maintain persistence across sessions.
 
 4. Conversational Context For Similarity Search:
-   We've got a problem to overcome here for follow up questions. In order to perform the similarity search on our documents, we need to create a standalone question
+   We've got a problem to overcome here for follow up questions. In order to perform the similarity search on our documents, we
+   need to create a standalone question
    that takes into account the full context of the conversation, otherwise we risk returning irrelevant documents.
    Example:
           User: I named my dog Parrot because he's very talkative.
@@ -63,10 +64,12 @@ Key Concepts:
     Within the context of our conversation, we know the user is actually interested in dog food.
           
     We'll solve this by making two LLM calls for every follow up question:
-    1. The first LLM call does not perform document retrieval, it simply takes the users follow up question with the chat history and asks the LLM to create a standalone question.
+    1. The first LLM call does not perform document retrieval, it simply takes the users follow up question with the chat history and
+       asks the LLM to create a standalone question.
           - Input: User's follow-up question and the full chat history
           - Output: Standalone question incorporating the context of the conversation
-    2. We use the output of the first LLM call for our similarity search. We perform document retrieval using the standalone question and send these retrieved documents to the LLM for processing.
+    2. We use the output of the first LLM call for our similarity search. We perform document retrieval using the standalone question and
+       send these retrieved documents to the LLM for processing.
           - Perform document retrieval using the standalone question
           - Input: Original user question, chat history and retrieved documents
           - Output: Processed answer
@@ -93,8 +96,10 @@ Key Concepts:
    For our application, we'll need two system prompts:
    1. Condense Question Prompt: This prompt takes the chat history and the users follow up question and asks the LLM to create a standalone question.
       We use this prompt to create a query that we can use to perform a similarity search of our indexed documents.
-   2. Question Prompt: This prompt takes a user's question, the chat history and the related text chunks retrieved by our similarity search and asks the LLM to answer the question.
-      We use this prompt to provide the LLM with the relevant information from our documents and ask it to answer the users question using this information only.
+   2. Question Prompt: This prompt takes a user's question, the chat history and the related text chunks retrieved by our 
+      similarity search and asks the LLM to answer the question.
+      We use this prompt to provide the LLM with the relevant information from our documents and ask it to answer the users 
+      question using this information only.
       
     For more information on the prompts, see the templates/prompts.py file.
     
