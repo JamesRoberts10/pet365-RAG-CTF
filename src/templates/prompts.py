@@ -1,24 +1,28 @@
 """
 This module contains the prompts used for the retrieval-augmented generation (RAG) process.
-There's no code in this python file. The reason I have created it as a .py file is that we can import the prompts as variables in our main ai_utils.py file.
+
+There's no executable code in this Python file. It's structured as a .py file to allow importing the prompts as variables in our main ai_utils.py file.
 Storing the prompts seperately in this file does not provide any programatic benifits, it just makes the code more organised and easier to manage.
+
 We use the curly braces {} to inject variables into the prompt templates.
 
-The prompts themselves should be self-explanatory but here are a few notes on prompt engineering which you should use for your own prompts:
+The prompts themselves should be self-explanatory, but here are a few notes on prompt engineering that you'll find useful for crafting your own prompts:
 
-- Prompts matter. A lot. Do not underestimate the power of a well crafted prompt.
-- I use chain of thought (CoT) reasoning in all my prompts to help guide the LLM in formulating its response.
-- CoT is a technique where you explicitly list the steps the LLM should take in order to solve the problem.
-- It might seem a little overkill to ask the LLM to "Carefully read the chat history and the latest question" but it works. Dont question it.
-- Using capitalisation emphasises the importance of the instruction.
-- Test your prompts, refine them and test again. Iteration is key.
-- If your response keep coming back with something you dont like, specifically call that out as something not to include in the response.
-    In the QUESTION_PROMPT below, I had to include the line: "Do not mention that you have been provided with information or context documents to the user, just answer their question."
-    This is because the output kept mentioning that it was given information or context documents which was a little confusing to the user.
-- A few other techniques that are not used here (look them up if you are interested):
-    - Few-shot prompting: Providing the LLM with multiple examples of the desired output before providing the actual input.
-    - Tree of thought (ToT): Breaking down the problem into smaller steps and asking the LLM to explore multiple possible paths to a solution. Then asking the LLM to evaluate all the paths and pick the best one.
-    - Output formatting: Specifying the exact format that the LLM should return the output in.
+- Prompts matter. A lot. Never underestimate the power of a well-crafted prompt.
+- Use chain of thought (CoT) reasoning to guide the LLM in formulating its response.
+- CoT is a technique where you explicitly list the steps the LLM should take to solve the problem.
+- It might seem strange to ask the LLM to "Carefully read the chat history and the latest question," but it works. Don't question it.
+- Using capitalisation emphasises the importance of a specific instruction.
+- Test your prompts, refine them, and test again. Iteration is key.
+- If your responses keep coming back with something you don't like, specifically call that out as something to avoid.
+    For example, in the QUESTION_PROMPT below, I had to add: "Do not mention that you have been provided with information or context documents 
+    to the user, just answer their question."
+    This was because the output kept mentioning it was given information or context documents, which was a little confusing to the user.
+- There are a few other techniques we don't use here, but they're worth looking up if you're interested:
+    - Few-shot prompting: Give the LLM multiple examples of the desired output before providing the actual input.
+    - Tree of thought (ToT): Break down the problem into smaller steps, ask the LLM to explore multiple solution paths, then ask it
+      to evaluate and pick the best one.
+    - Output formatting: Specify the exact format you want the LLM to use for its output.
 """
 
 
