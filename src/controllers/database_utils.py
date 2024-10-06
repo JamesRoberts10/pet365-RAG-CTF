@@ -6,8 +6,11 @@ from pathlib import Path
 env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path)
 
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_INDEX = os.getenv("PINECONE_INDEX")
+
+# Remove these global variables
+# load_dotenv(env_path)
+# PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+# PINECONE_INDEX = os.getenv("PINECONE_INDEX")
 
 
 def set_pinecone_api_key(api_key):
@@ -21,6 +24,10 @@ def set_pinecone_index(index_name):
 
 
 def show_current_config():
+    # Reload the environment variables
+    load_dotenv(env_path, override=True)
+
+    # Get the latest values
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
     PINECONE_INDEX = os.getenv("PINECONE_INDEX")
 

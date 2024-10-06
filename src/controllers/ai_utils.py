@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
@@ -24,11 +24,6 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 ENV_PATH = Path(__file__).parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
-# Load environment variables
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 """
 This module contains the code for processing user queries and generating responses using retrieval-augmented generation (RAG).
@@ -139,12 +134,19 @@ class llmObject:
     - API keys for each LLM provider should be set in the environment variables.
     """
 
+    # We use a static method to retrieve the API keys for each LLM from the environment variables
+    # This ensures that the API keys are loaded when the class is instantiated and not just when the application is first run
+    # Without this, we'd need to restart the application to update the API keys when they are set in the front end
+    @staticmethod
+    def get_api_key(key_name):
+        return os.environ.get(key_name)
+
     def Claude(self):
         return ChatAnthropic(
             model="claude-3-5-sonnet-20240620",
             temperature=0.5,
             streaming=True,
-            api_key=ANTHROPIC_API_KEY,
+            api_key=self.get_api_key("ANTHROPIC_API_KEY"),
         )
 
     def GPT(self):
@@ -152,7 +154,7 @@ class llmObject:
             model_name="gpt-4o",
             temperature=0.5,
             streaming=True,
-            api_key=OPENAI_API_KEY,
+            api_key=self.get_api_key("OPENAI_API_KEY"),
         )
 
     def Gemini(self):
@@ -160,7 +162,7 @@ class llmObject:
             model="gemini-pro",
             temperature=0.5,
             streaming=True,
-            api_key=GOOGLE_API_KEY,
+            api_key=self.get_api_key("GOOGLE_API_KEY"),
         )
 
 
@@ -216,8 +218,8 @@ def query(user_query, selected_llm):
     # This time, the embedding model is used to create a vector representation of the user'squery.
     # It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding
     # can be accurately compared to the document embeddings in the vector database.
-    pc = Pinecone(api_key=PINECONE_API_KEY)
-    index = pc.Index("pet365")
+    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    index = pc.Index(os.getenv("PINECONE_INDEX"))
     embeddings = OpenAIEmbeddings()
     vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
@@ -307,3 +309,8 @@ def query(user_query, selected_llm):
     for chunk in response:
         if "answer" in chunk:
             yield chunk["answer"]
+
+
+def reload_env_variables():
+    load_dotenv(ENV_PATH, override=True)
+    return "Environment variables reloaded."

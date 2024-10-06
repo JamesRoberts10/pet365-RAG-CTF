@@ -1,11 +1,36 @@
 import gradio as gr
-from controllers.ai_utils import query
+from controllers.ai_utils import query, reload_env_variables
 from controllers.api_utils import get_api_key_status, set_api_keys
 from controllers.database_utils import (
     set_pinecone_api_key,
     show_current_config,
     set_pinecone_index,
 )
+from dotenv import load_dotenv
+import os
+from pathlib import Path
+
+# Add this at the top of the file, after the imports
+env_path = Path(__file__).parent.parent.parent / ".env"
+
+
+# Add this new function to check if the Pinecone API key is set
+def check_api_keys():
+    pinecone_api_key = os.getenv("PINECONE_API_KEY")
+    anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+
+    pinecone_key_set = pinecone_api_key is not None and pinecone_api_key.strip() != ""
+    llm_key_set = any(
+        [
+            anthropic_api_key is not None and anthropic_api_key.strip() != "",
+            openai_api_key is not None and openai_api_key.strip() != "",
+            google_api_key is not None and google_api_key.strip() != "",
+        ]
+    )
+
+    return pinecone_key_set and llm_key_set
 
 
 def create_api_key_interface(task_type):
@@ -164,7 +189,7 @@ def create_database_config_interface():
     with gr.Row():
         index_dropdown = gr.Dropdown(
             label="Pinecone Index",
-            choices=["pet365", "Super Secret Database"],
+            choices=["pet365", "super-secret-database"],
             value="pet365",
         )
     with gr.Row():
@@ -219,12 +244,39 @@ def init_interface():
                 height: 400px;
                 overflow-y: auto;
             }
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .popup {
+                background-color: white;
+                padding: 4px;
+                border-radius: 2px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                max-width: 100%;
+                width: fit-content;
+                text-align: center;
+            }
+            .popup button {
+                margin-top: 10px;
+            }
             """,
     ) as demo:
         with gr.Column(elem_classes="root-container"):
             gr.Markdown("# Pet365")
 
-            with gr.Tabs():
+            # Create a hidden component to store the reload status
+            reload_status = gr.Textbox(visible=False)
+
+            with gr.Tabs() as tabs:
                 with gr.TabItem("Chat"):
                     create_initial_interface("Chat")
 
@@ -234,4 +286,35 @@ def init_interface():
                 with gr.TabItem("Database Config"):
                     create_database_config_interface()
 
+            # Add an event listener for tab changes
+            tabs.select(
+                fn=reload_env_variables,
+                inputs=[],
+                outputs=[reload_status],
+            )
+
+            # Add an overlay and popup component
+            with gr.Group(visible=False) as overlay:
+                with gr.Group(elem_classes="overlay"):
+                    with gr.Group(elem_classes="popup"):
+                        gr.Markdown("## API Keys Not Set")
+                        gr.Markdown(
+                            "Please set at least one LLM API key and the Pinecone API key in the Config tabs before using the application."
+                        )
+                        close_popup_btn = gr.Button("Close")
+
+            # Update the check for API keys
+            if not check_api_keys():
+                overlay.visible = True
+
+            # Close overlay when the close button is clicked
+            close_popup_btn.click(
+                fn=lambda: gr.update(visible=False),
+                outputs=[overlay],
+            )
+
     return demo
+
+
+# Ensure environment variables are loaded when the module is imported
+load_dotenv(env_path, override=True)
