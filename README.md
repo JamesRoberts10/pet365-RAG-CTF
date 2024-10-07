@@ -1,31 +1,18 @@
 # pet365
 
-  
-
-A content analysis tool that extracts key insights from various sources including YouTube videos, web pages, and documents.
-  
-
-> ***It's Blinkest, but for YouTube, blogs and PDFs***
-
+<INTRO>
   
 
 ## Flow
 
-![FlowChart](images/FlowChart.png)
+<DIAGRAM>
 
 
   
 
 ## How It Works
 
- 1. Content Extraction: The system use various methods to extract raw
-    text from the provided source (YouTube video, web page, or uploaded
-    file).   
- 2. Preprocessing: Raw content is cleaned and formatted in preparation for analysis.
-    
- 3. Analysis: The selected LLM processes the content using a set of optimised prompts.
- 4. Insight Generation: The system generates a structured output including a summary, key ideas, insights, and recommendations.
- 5. User Interaction: Results are streamed in real-time through the chat interface.
+ 
 
   
 
@@ -43,7 +30,7 @@ A content analysis tool that extracts key insights from various sources includin
 
 
 
-***[ai_utils.py](https://github.com/JamesRoberts10/pet365/blob/main/src/controllers/ai_utils.py)*** - Provides core functionality for content analysis. Handles YouTube transcript extraction, web content scraping, file parsing, and LLM summarisation. Includes functions for processing content, making API calls, and streaming responses to the frontend.
+***[ai_utils.py](https://github.com/JamesRoberts10/pet365/blob/main/src/controllers/ai_utils.py)*** - 
 
   
 
@@ -54,7 +41,7 @@ A content analysis tool that extracts key insights from various sources includin
 
   
 
-***[main.py](https://github.com/JamesRoberts10/MEGAai/blob/main/src/Main.py)*** - The application entry point. Initiates the Gradio front end.
+***[main.py](https://github.com/JamesRoberts10/pet365/blob/main/src/Main.py)*** - The application entry point. Initiates the Gradio front end.
 
   
 
@@ -62,7 +49,7 @@ A content analysis tool that extracts key insights from various sources includin
 
   
 
-***[prompts.py](https://github.com/JamesRoberts10/MEGAai/blob/main/src/templates/prompts.py)*** - Predefined prompt templates for various content analysis tasks.
+***[prompts.py](https://github.com/JamesRoberts10/pet365/blob/main/src/templates/prompts.py)*** - 
 
   
 
@@ -100,7 +87,7 @@ git clone https://github.com/JamesRoberts10/MEGAai.git
 
 ```bash
 
-cd MEGAai
+cd pet365
 
 ```
 
@@ -144,7 +131,7 @@ To install using Docker, follow these steps:
 
 ```bash
 
-git clone https://github.com/JamesRoberts10/MEGAai.git
+git clone https://github.com/JamesRoberts10/pet365.git
 
 ```
 
@@ -154,7 +141,7 @@ git clone https://github.com/JamesRoberts10/MEGAai.git
 
 ```bash
 
-cd MEGAai
+cd pet365
 
 ```
 
@@ -164,7 +151,7 @@ cd MEGAai
 
 ```bash
 
-docker build -t megaai .
+docker build -t pet365 .
 
 ```
 
@@ -176,7 +163,7 @@ docker build -t megaai .
 
 ```bash
 
-docker run -p 7860:7860 megaai
+docker run -p 7860:7860 pet365
 
 ```
 
@@ -216,16 +203,16 @@ docker run -p 7860:7860 megaai
 
   
 
-4. Extract Ideas tab
+4. 
 
   
 
-5. Select your LLM of choice
+5. 
 
   
 
-6. Enter Youtube/Web URL or upload a file
+6. 
 
   
 
-7. Submit
+7. 

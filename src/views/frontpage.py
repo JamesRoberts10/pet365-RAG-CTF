@@ -79,7 +79,7 @@ def create_initial_interface(task_type):
         llm_dropdown = gr.Dropdown(
             choices=["GPT4o", "GPT3_5", "Claude", "Gemini"],
             label="Select Your LLM",
-            value="Claude",
+            value="GPT4o",
         )
 
     with gr.Row():
@@ -114,7 +114,7 @@ def create_initial_interface(task_type):
         history.append((message, ""))
 
         if llm == "GPT3_5" and not gpt3_5_message_shown:
-            prepend_message = "Nice work! Using an older model is a good approach as the input sanitisation is often weaker. That is why you were using GPT3.5 right? FLAG{Gipity_Downgrade}\n\n"
+            prepend_message = "Nice work! Using an older model is a good approach as the input sanitisation is often weaker. That IS why you were using GPT3.5 right? FLAG{Gipity_Downgrade}\n\n"
             gpt3_5_message_shown = True
         else:
             prepend_message = ""
