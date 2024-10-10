@@ -30,8 +30,8 @@ Clues:
 - Flag 1 - System prompting
 - Flag 2 - Wrong database
 - Flag 3 - Bit of a downgrade
-Flag 4 - Mark Zuckerberg's data
-Flag 5 - HR will be livid
+- Flag 4 - Mark Zuckerberg's data
+- Flag 5 - HR will be livid
 
 ## Flow
 tbc
