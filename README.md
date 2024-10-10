@@ -27,10 +27,10 @@ Tips:
 - If you get stuck, shoot me a message and I'll send you a hint.
 
 Clues:
-Flag 1 - System prompting
-Flag 2 - Wrong database
-Flag 3 - Bit of a downgrade
-Flag 4 - Mark Zuch's data
+- Flag 1 - System prompting
+- Flag 2 - Wrong database
+- Flag 3 - Bit of a downgrade
+Flag 4 - Mark Zuckerberg's data
 Flag 5 - HR will be livid
 
 ## Flow
