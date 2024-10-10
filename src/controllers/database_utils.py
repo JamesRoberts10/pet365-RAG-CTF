@@ -7,8 +7,9 @@ env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path)
 
 
-def set_pinecone_api_key(api_key):
+def set_pinecone_api_key(api_key, index_name):
     set_key(env_path, "PINECONE_API_KEY", api_key)
+    set_key(env_path, "PINECONE_INDEX", index_name)
     return "Pinecone API key has been set."
 
 

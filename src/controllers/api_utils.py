@@ -6,6 +6,21 @@ from pathlib import Path
 env_path = Path(__file__).parent.parent / ".env"
 
 
+"""
+This small module contains the code for managing the LLM API keys.
+
+Key Concepts:
+
+1. Environmental Variables:
+  
+2. .env Files:
+ 
+3. .gitignore:
+   
+
+"""
+
+
 def get_api_key_status():
     # Checks the status of API keys in the environment
     # Assigned to the Get API Keys button in the Gradio front end

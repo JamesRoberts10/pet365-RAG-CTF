@@ -1,20 +1,44 @@
 # pet365
 
 <INTRO>
-  
+tbc
+
+## CTF
+The aim of this Capture the Flag exercise is to explore the exploitation of generative AI applications. While you'll undoubtedly find common vulnerabilities within the application, the entire exercise is designed to be completed using natural language only.
+
+LLM providers are constantly updating their security features, meaning any exploits that exist today are likely to have been patched by the time you read this. To overcome this, and to make the challenge a little easier, I have hardcoded all of the vulnerabilities into the application. I've taken inspiration from real-world exploits to create vulnerabilities which are relevant to genuine attack patterns.
+
+Rules:
+- All flags must be found through the chat interface.
+- Flags are in the format: `FLAG{...}`
+- The Pinecone API has write access. Please don't abuse the Pinecone database.
+- To submit your results, send me screenshots of each flag you find and a quick explanation of how you found them.
+- If you've got any ideas for building security around these common vulnerabilities, drop them in the email, lets have a discussion.
+
+Prizes:
+Anyone who submits all flags to me will win the following:
+- 1 beer/coffee
+- Bragging rights
+
+Tips:
+- Read the code. I've left detailed descriptions throughout the codebase to guide you. Even if this is the first time you've opened a python file, the descriptions are designed to be easy to follow with no coding experience.
+- Start with src/controllers/vector_utils.py file.
+- LLM outputs are non-deterministic. If you don't see the flag on your first attempt, try again.
+- If you get stuck, shoot me a message and I'll send you a hint.
+
+Clues:
+Flag 1 - System prompting
+Flag 2 - Wrong database
+Flag 3 - Bit of a downgrade
+Flag 4 - Mark Zuch's data
+Flag 5 - HR will be livid
 
 ## Flow
-
-<DIAGRAM>
-
-
+tbc
   
 
 ## How It Works
-
- 
-
-  
+tbc
 
   
 
@@ -79,7 +103,7 @@ To install using the standard method, follow these steps:
 
 ```bash
 
-git clone https://github.com/JamesRoberts10/MEGAai.git
+git clone https://github.com/JamesRoberts10/pet365.git
 
 ```
 
@@ -199,7 +223,7 @@ docker run -p 7860:7860 pet365
 
   
 
-3. Add at least one LLM API key
+3. Add OpenAI API key
 
   
 

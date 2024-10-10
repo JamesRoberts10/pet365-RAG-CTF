@@ -109,6 +109,11 @@ def prepare_documents(directory: str) -> list[Document]:
                     for doc in file_documents
                 ]
                 documents.extend(cleaned_documents)
+
+                # Print metadata for each cleaned document
+                for doc in cleaned_documents:
+                    print(f"Metadata for document from {filename}: {doc.metadata}")
+
             except Exception as e:
                 print(f"Error loading {filename}: {str(e)}")
                 if "startxref" in str(e).lower():

@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 import os
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
@@ -263,6 +263,11 @@ def query(user_query, selected_llm):
         ]
     )
 
+    # The document prompt is used to ensure the metadata is included in the text chunks we send to the LLM.
+    document_prompt = ChatPromptTemplate.from_template(
+        "Content: {page_content}\nSource: {source}\nAuthorUsername: {AuthorUsername}"
+    )
+
     # The history aware retriever is used to perform document retrieval from the vector database
     # If chat history exists, it first passes the chat history and the user's question to the LLM via the condense_question_prompt we created above
     # The LLM uses the condense_question_prompt to create a standalone question as the output
@@ -285,7 +290,13 @@ def query(user_query, selected_llm):
     # Other document chain methods (map-reduce, refine etc) perform pre-processing of the text chunks before adding them to the prompt in order to reduce the context window
     # We're using the create_stuff_documents method here because we only have a few text chunks to add to the prompt
     # This covers Action 4. Pass the question and chunks to the LLM for final response
-    qa_chain = create_stuff_documents_chain(llm, qa_prompt)
+
+    qa_chain = create_stuff_documents_chain(
+        llm,
+        qa_prompt,
+        document_variable_name="context",
+        document_prompt=document_prompt,
+    )
 
     # The retrieval chain is used to perform a similarity search in the vector database
     # If chat history exists, it first passes the chat history and the user's question to the LLM via the condense_question_prompt we created above
@@ -320,7 +331,7 @@ def query(user_query, selected_llm):
 
 
 # This little helper function allows us to reload the environment variables when we make changes in the front end.
-# This ensures that any changes to the environment variables are reflected immediately.
+# This ensures that any changes to the environment variables, like setting the API keys, are reflected immediately.
 def reload_env_variables():
     load_dotenv(ENV_PATH, override=True)
     return "Environment variables reloaded."

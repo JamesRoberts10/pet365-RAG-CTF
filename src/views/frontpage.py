@@ -10,30 +10,19 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 
-# Add this at the top of the file, after the imports
-env_path = Path(__file__).parent.parent.parent / ".env"
 
-# Add this global variable
+env_path = Path(__file__).parent.parent.parent / ".env"
 gpt3_5_message_shown = False
 
 
-# Add this new function to check if the Pinecone API key is set
 def check_api_keys():
     pinecone_api_key = os.getenv("PINECONE_API_KEY")
-    anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
     openai_api_key = os.getenv("OPENAI_API_KEY")
-    google_api_key = os.getenv("GOOGLE_API_KEY")
 
     pinecone_key_set = pinecone_api_key is not None and pinecone_api_key.strip() != ""
-    llm_key_set = any(
-        [
-            anthropic_api_key is not None and anthropic_api_key.strip() != "",
-            openai_api_key is not None and openai_api_key.strip() != "",
-            google_api_key is not None and google_api_key.strip() != "",
-        ]
-    )
+    openai_key_set = openai_api_key is not None and openai_api_key.strip() != ""
 
-    return pinecone_key_set and llm_key_set
+    return pinecone_key_set and openai_key_set
 
 
 def create_api_key_interface(task_type):
@@ -220,7 +209,7 @@ def create_database_config_interface():
 
     set_pinecone_key_btn.click(
         fn=set_pinecone_api_key,
-        inputs=[pinecone_key_input],
+        inputs=[pinecone_key_input, index_dropdown],
         outputs=database_config_status,
     )
 
@@ -305,28 +294,24 @@ def init_interface():
                 with gr.TabItem("Database Config"):
                     create_database_config_interface()
 
-            # Add an event listener for tab changes
             tabs.select(
                 fn=reload_env_variables,
                 inputs=[],
                 outputs=[reload_status],
             )
 
-            # Add an overlay and popup component
             with gr.Group(visible=False) as overlay:
                 with gr.Group(elem_classes="overlay"):
                     with gr.Group(elem_classes="popup"):
                         gr.Markdown("## API Keys Not Set")
                         gr.Markdown(
-                            "Please set at least one LLM API key and the Pinecone API key in the Config tabs before using the application."
+                            "Please set the OpenAI API key and the Pinecone database API key in the Config tabs before using the application."
                         )
                         close_popup_btn = gr.Button("Close")
 
-            # Update the check for API keys
             if not check_api_keys():
                 overlay.visible = True
 
-            # Close overlay when the close button is clicked
             close_popup_btn.click(
                 fn=lambda: gr.update(visible=False),
                 outputs=[overlay],
@@ -335,5 +320,4 @@ def init_interface():
     return demo
 
 
-# Ensure environment variables are loaded when the module is imported
 load_dotenv(env_path, override=True)

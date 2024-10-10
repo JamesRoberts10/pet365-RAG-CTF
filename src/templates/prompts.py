@@ -94,4 +94,8 @@ Here is the chat history:
 Here is the question to answer:
 
 {input}
+
+Include the source document name in full at the end of your answer but do not include the AuthorUsername by default.
+If the user specifically asks for the metadata, then and only then include the AuthorUsername.
+
 """
