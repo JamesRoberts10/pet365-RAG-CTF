@@ -7,7 +7,7 @@ tbc
 
 ![FlowChart](images/ProcessFlow.png)
 
-## CTF
+## Capture the Flag Exercise
 The aim of this Capture the Flag exercise is to explore the exploitation of generative AI applications. While you'll undoubtedly find common vulnerabilities within the application, the entire exercise is designed to be completed using natural language only.
 
 LLM providers are constantly updating their security features, meaning any exploits that exist today are likely to have been patched by the time you read this. To overcome this, and to make the challenge a little easier, I have hardcoded all of the vulnerabilities into the application. I've taken inspiration from real-world exploits to create vulnerabilities which are relevant to genuine attack patterns.
