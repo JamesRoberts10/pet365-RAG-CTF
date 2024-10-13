@@ -130,15 +130,14 @@ def prepare_documents(directory: str) -> list[Document]:
     # Next we'll use RecursiveCharacterTextSplitter to split the documents into smaller chunks.
     # We set the chunk size to 512 characters and the overlap to 50 characters.
     # It's important to have an overlap to prevent text from being cut off abruptly.
-    # The "separators" parameter instructs the splitter to look for any of the specified strings in the text to indicate where the chunks should be split.
-    # Basically, we're saying: Split the text into 512 character chunks, but look for delimiters to split at if possible.
+    # The "separators" argument instructs the splitter to look for any of the specified strings in the text to indicate where the chunks should be split.
+    # Basically, we're saying: Split the text into 512 character chunks, but look for a clean delimiter to split at if possible.
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=512,
         chunk_overlap=50,
         length_function=len,
         separators=["\n\n", "\n", " ", ""],
     )
-    # We feed in our list of pages and it returns a list of chunk objects.
     split_docs = text_splitter.split_documents(documents)
     print(f"Total chunks after splitting: {len(split_docs)}")
     return split_docs

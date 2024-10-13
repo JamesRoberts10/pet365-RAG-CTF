@@ -103,7 +103,7 @@ def create_initial_interface(task_type):
         history.append((message, ""))
 
         if llm == "GPT3_5" and not gpt3_5_message_shown:
-            prepend_message = "Nice work! Using an older model is a good approach as the input sanitisation is often weaker. That IS why you were using GPT3.5 right? FLAG{Gipity_Downgrade}\n\n"
+            prepend_message = "Nice work! Using an older model is a good approach as the input sanitisation is often weaker. That IS why you were using GPT3.5 right? FLAG{gipity_downgrade}\n\n"
             gpt3_5_message_shown = True
         else:
             prepend_message = ""
