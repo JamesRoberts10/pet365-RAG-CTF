@@ -177,6 +177,11 @@ def create_initial_interface(task_type):
 theme = gr.themes.Monochrome(
     spacing_size="md",
     radius_size="sm",
+    font=[gr.themes.GoogleFont("Work Sans"), gr.themes.GoogleFont("Work Sans")],
+    font_mono=[
+        gr.themes.GoogleFont("Work Sans"),
+        gr.themes.GoogleFont("Work Sans"),
+    ],
 ).set(
     embed_radius="*radius_md",
     button_primary_background_fill_hover_dark="*neutral_500",
