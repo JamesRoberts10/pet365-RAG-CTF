@@ -284,7 +284,7 @@ def init_interface():
             """,
     ) as demo:
         with gr.Column(elem_classes="root-container"):
-            gr.Markdown("# Pet365")
+            gr.Markdown("# pet365")
 
             # Create a hidden component to store the reload status
             reload_status = gr.Textbox(visible=False)
