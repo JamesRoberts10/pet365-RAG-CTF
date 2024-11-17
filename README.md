@@ -45,7 +45,7 @@ tbc
 
 ## Project Files Description
 
-  
+![ProjectDescription](images/ProjectDescription.png)
 
 **Executable Files**
 
