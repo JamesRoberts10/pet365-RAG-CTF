@@ -54,7 +54,7 @@ This application implements a Retrieval-Augmented Generation (RAG) pattern to an
     * Each text chunk is converted into a numerical vector (embedding) using an AI model (OpenAI's embedding model`).
     * These embeddings, along with the original text chunks and metadata, are stored in a vector database (Pinecone).
 
-2.  **Querying (Runtime Process):**
+2.  **Querying:**
     * The user interacts via a web interface (Gradio - `frontpage.py`).
     * API keys for the selected LLM are managed via environment variables and the `.env` file (`api_utils.py`).
     * When a user sends a query (`ai_utils.py`):
