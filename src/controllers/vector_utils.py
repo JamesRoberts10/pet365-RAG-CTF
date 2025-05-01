@@ -13,38 +13,38 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
 """
-# This module is responsible for indexing the source documents into the Pinecone vector database.
-# The process involves breaking down documents, generating vector embeddings, and storing them.
+ This module is responsible for indexing the source documents into the Pinecone vector database.
+ The process involves breaking down documents, generating vector embeddings, and storing them.
 
-# Key Concepts:
-#
-# 1. Chunking:
-#    - Documents are initially segmented into smaller, more manageable text chunks.
-#    - Rationale: Processing smaller chunks improves the relevance of search results later.
-#      Instead of retrieving entire large documents, the system can pinpoint and return
-#      only the specific segments most relevant to a user's query.
-#
-# 2. Embedding:
-#    - Each text chunk is converted into a numerical vector representation, known as an "embedding".
-#    - These vectors are designed to capture the semantic meaning of the text, forming the basis
-#      for performing similarity searches.
-#    - How it works: Think of the vector as coordinates placing the chunk within a high-dimensional
-#      "semantic space". Text chunks with similar meanings will have vectors that are
-#      mathematically closer together in this space.
-#    - Example:
-#      (Simplified vectors for illustration)
-#        "cybersecurity" -> [0.8, 0.6, 0.2, ...]
-#        "hacking"       -> [0.7, 0.5, 0.3, ...]
-#        "baking"        -> [0.1, 0.2, 0.9, ...]
-#      Here, the vectors for "cybersecurity" and "hacking" have a greater similarity
-#      (closer proximity) compared to "baking".
-#    - I'm using OpenAI's embedding API to generate these vector representations from the text chunks.
-#
-# 3. Pinecone Storage:
-#    - The resulting vector embeddings, along with their corresponding original text chunks,
-#      are stored together in Pinecone.
-#    - Pinecone acts as the cloud-based vector database. I choose it because it avoids
-#      the need to manage vector database infrastructure locally.
+ Key Concepts:
+
+ 1. Chunking:
+    - Documents are initially segmented into smaller, more manageable text chunks.
+    - Rationale: Processing smaller chunks improves the relevance of search results later.
+      Instead of retrieving entire large documents, the system can pinpoint and return
+      only the specific segments most relevant to a user's query.
+
+ 2. Embedding:
+    - Each text chunk is converted into a numerical vector representation, known as an "embedding".
+    - These vectors are designed to capture the semantic meaning of the text, forming the basis
+      for performing similarity searches.
+    - How it works: Think of the vector as coordinates placing the chunk within a high-dimensional
+      "semantic space". Text chunks with similar meanings will have vectors that are
+      mathematically closer together in this space.
+    - Example:
+      (Simplified vectors for illustration)
+        "cybersecurity" -> [0.8, 0.6, 0.2, ...]
+        "hacking"       -> [0.7, 0.5, 0.3, ...]
+        "baking"        -> [0.1, 0.2, 0.9, ...]
+      Here, the vectors for "cybersecurity" and "hacking" have a greater similarity
+      (closer proximity) compared to "baking".
+    - I'm using OpenAI's embedding API to generate these vector representations from the text chunks.
+
+ 3. Pinecone Storage:
+    - The resulting vector embeddings, along with their corresponding original text chunks,
+      are stored together in Pinecone.
+    - Pinecone acts as the cloud-based vector database. I choose it because it avoids
+      the need to manage vector database infrastructure locally.
 
 """
 

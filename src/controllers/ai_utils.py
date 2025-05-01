@@ -19,124 +19,124 @@ sys.path.append(str(project_root))
 
 from src.templates.prompts import CONDENSE_QUESTION_PROMPT, QUESTION_PROMPT
 
-# Constants and environment setup
+# environment setup
 sys.path.append(str(Path(__file__).parent.parent.parent))
 ENV_PATH = Path(__file__).parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
 
 """
-This module contains the code for processing user queries and generating responses using retrieval-augmented generation (RAG).
-For details on how we created and populated our document index, check out the vector_utils.py file first.
+This module contains the core logic for processing user queries and generating responses
+using retrieval-augmented generation (RAG).
+For details on how the document index was created and populated, check the
+vector_utils.py file first.
 
 Key Concepts:
 
 1. LLM Selection:
-   The frontend allows users to select their preferred LLM from a dropdown list. Each LLM has unique API endpoint, connection settings and an API key.
-   To manage this we'll store each LLM's unique details in file and match the users selection for our LLM API calls.
+   The frontend allows users to select a preferred LLM from a dropdown list.
+   Each LLM requires specific details (API endpoint, connection settings, API key).
+   To manage this, the unique details for each configured LLM are stored, allowing the
+   application to use the correct settings based on the user's selection for API calls.
 
 2. Data Retrieval:
-   Before we send the users query to the LLM for processing, we need to retrieve the relevant data from our Pinecone vector database. 
-   To do this we'll first create a vector embedding of the query. Then, we'll perform a similarity search using this embedding to find the most
-   relevant text chunks from our database. Finally, we'll send these text chunks along with the user's query to the LLM for processing.
+   Before sending a user's query to the LLM for generation, relevant information needs
+   to be retrieved from the Pinecone vector database (the index).
+   The process involves:
+   a. Creating a vector embedding of the user's query.
+   b. Performing a similarity search in Pinecone using this query embedding to find the
+      most relevant text chunks from the indexed documents.
+   c. Sending these retrieved text chunks, along with the original query (and chat history),
+      to the selected LLM.
 
-3. Chat History: 
-   The key difference in using LLM APIs over their chat interfaces is that they do not handle history for us. We must do this application side.
-   To achieve this, we'll record all interactions in a chat history object and send the full chat history with the user's query to the LLM for each interaction.
-   For simplicity, we'll store the chat history in memory rather than in a database.
-   Note that in a production environment, we'd want to use a database to store the chat history in order to maintain persistence across sessions.
+3. Chat History:
+   A key difference when using LLM APIs directly (compared to chat interfaces like ChatGipity)
+   is that the API itself is stateless; it doesn't automatically remember previous turns
+   in the conversation. History must be handled application-side.
+   To achieve this, interactions are recorded in a chat history object. For each new user
+   message, the chat history is sent along with the current query to the LLM,
+   providing the necessary context.
+   For simplicity, the chat history is stored in memory.
+   Note: In a production environment, a database would typically be used to store chat
+   history for persistence across user sessions and application restarts.
 
-4. Conversational Context For Similarity Search:
-   We've got a problem to overcome here for follow up questions. In order to perform the similarity search on our documents, we
-   need to create a standalone question
-   that takes into account the full context of the conversation, otherwise we risk returning irrelevant documents.
+4. Handling Conversational Context for Similarity Search:
+   Follow-up questions present an interesting challenge. A direct similarity search using just the
+   follow-up question might fail if the question relies on context from earlier in the chat.
    Example:
-          User: I named my dog Parrot because he's very talkative.
-          AI: That's a great name
-          User: What food do you sell for Parrot?
-          
-    Without context, our similarity search for the question "What food do you sell for Parrot?" would return documents relating to bird food.
-    Within the context of our conversation, we know the user is actually interested in dog food.
-          
-    We'll solve this by making two LLM calls for every follow up question:
-    1. The first LLM call does not perform document retrieval, it simply takes the users follow up question with the chat history and
-       asks the LLM to create a standalone question.
-          - Input: User's follow-up question and the full chat history
-          - Output: Standalone question incorporating the context of the conversation
-    2. We use the output of the first LLM call for our similarity search. We perform document retrieval using the standalone question and
-       send these retrieved documents to the LLM for processing.
-          - Perform document retrieval using the standalone question
-          - Input: Original user question, chat history and retrieved documents
-          - Output: Processed answer
-    Example:
-          User: I named my dog Parrot because he's very talkative.
-          AI: That's a great name
-          User: What food do you sell for Parrot?
-          
-          1. First LLM Call: 
-            - Input: given the chat history and the users follow up question, produce a standalone question
-            - Output: "What food do you sell for a dog named Parrot?"
-          
-          2. Perform document retrieval using the standalone question
-             Retrieved documents: Dog food related
-             Second LLM Call: 
-             - Input: The original user question, chat history and retrieved documents
-             - Output: "Here are some suitable food options for your dog: ..."
+       User: I named my dog Parrot because he's very talkative.
+       AI: That's a great name!
+       User: What food do you sell for Parrot?
 
-    The downside to this method is that it requires two LLM calls for every follow up question which can slow down the conversation and increase costs.
-    
+   Performing a similarity search on "What food do you sell for Parrot?" without context
+   would likely retrieve documents about bird food, not dog food. The search needs the
+   context that "Parrot" refers to a dog.
+
+   The solution I've implemented here involves making two LLM calls for follow-up questions:
+   1. First LLM Call (Condense Question):
+      - Task: Generate a standalone question that incorporates context from the chat history.
+      - Input: The user's latest follow-up question and the full chat history.
+      - Output: A self-contained question suitable for similarity search (e.g., "What food do you sell for a dog named Parrot?").
+      - Note: This call does not use retrieved documents.
+   2. Second LLM Call (Generate Answer):
+      - Task: Answer the user's original question using retrieved context.
+      - Preparation: Perform the similarity search using the standalone question generated in step 1.
+      - Input: The original user follow-up question, the full chat history, and the relevant document chunks retrieved from Pinecone.
+      - Output: The final answer to the user (e.g., "Here are some suitable food options for your dog: ...").
+
+   Trade-off: This approach ensures relevance for follow-up questions but requires two LLM calls per turn, increasing latency and potential cost.
+
 5. System Prompts:
-   System prompts serve as a wrapper for our user queries and provide the LLM with additional instructions and context.
-   Instead of passing the query directly to the LLM, we use carefully constructed prompts to provide specific instructions with each user query.
-   For our application, we'll need two system prompts:
-   1. Condense Question Prompt: This prompt takes the chat history and the users follow up question and asks the LLM to create a standalone question.
-      We use this prompt to create a query that we can use to perform a similarity search of our indexed documents.
-   2. Question Prompt: This prompt takes a user's question, the chat history and the related text chunks retrieved by our 
-      similarity search and asks the LLM to answer the question.
-      We use this prompt to provide the LLM with the relevant information from our documents and ask it to answer the users 
-      question using this information only.
-      
-    For more information on the prompts, see the templates/prompts.py file.
+   System prompts provide instructions, context, and constraints to the LLM, guiding its behaviour.
+   Instead of sending only the user's text, queries are wrapped in carefully constructed prompts.
+   This application utilises two main system prompts:
+   1. Condense Question Prompt: Used in the first LLM call (step 4.1). It instructs the LLM
+      to reformulate the user's follow-up question into a standalone query using the chat history.
+      The output is used solely for the similarity search.
+   2. Question Answering Prompt: Used in the second LLM call (step 4.2). It provides the LLM
+      with the user's question, chat history, and the retrieved document chunks. It instructs
+      the LLM to answer the question based only on the provided context documents.
+
+   For the specific wording of these prompts, see the `templates/prompts.py` file.
     
 """
 
 
-# As the frontend interface allows the user to select between different LLMs, we need to dynamically create the LLM instance based on the user's selection.
-# We could do this using a simple if statement but a cleaner option is to use an object-oriented approach and create a class with methods for each LLM.
-# This allows us to easily add new LLM vendors or expand the model selection in the future.
+# LLM Factory Class
+# Handles the dynamic creation of LLM instances based on user selection from the frontend.
+# This object-oriented approach simplifies adding new LLM vendors or models in the future,
+# compared to using multiple if/else statements.
 class llmObject:
     """
-    A factory class for initialising different LLM chat interfaces.
+    A factory class for initialising different LLM chat interfaces via Langchain.
 
-    This class provides methods to create instances of various LLM chat models
-    with predefined configurations. It supports easy integration of multiple
-    LLM providers and models, allowing for flexible model selection within the application.
+    Provides methods to create instances of various LLM chat models (Claude, GPT, Gemini)
+    with predefined configurations (temperature, streaming). It centralises LLM setup
+    and allows for flexible model selection based on frontend input.
 
-    Supported LLMs:
-    - Claude (Anthropic)
-    - GPT (OpenAI)
-    - Gemini (Google)
+    Supported LLMs (Methods):
+    - Claude: Anthropic's Claude 3.5 Sonnet model.
+    - GPT4o: OpenAI's GPT-4o model.
+    - GPT3_5: OpenAI's GPT-3.5 Turbo model.
+    - Gemini: Google's Gemini Pro model.
 
-    Each LLM is configured with the following default parameters:
-    - temperature: 0.5 (balances creativity and consistency)
-    - streaming: True (enables token-by-token response generation)
-
-    The class structure enables easy addition of new LLM interfaces and
-    ensures consistent initialisation across different chat models.
+    Default Parameters:
+    - temperature=0.5: Controls the randomness/creativity of the output. 0.5 offers a balance.
+    - streaming=True: Enables generating the response token by token, improving perceived responsiveness.
 
     Usage:
-        llm = llmObject()
-        claude_instance = llm.Claude()
-        gpt_instance = llm.GPT()
-        gemini_instance = llm.Gemini()
+        llm_factory = llmObject()
+        # Get an instance based on a string name (e.g., from frontend selection)
+        selected_model_name = "GPT4o"
+        llm_instance = getattr(llm_factory, selected_model_name)()
 
     Note:
-    - API keys for each LLM provider should be set in the environment variables.
+    - Requires API keys for the respective LLM providers to be set as environment variables
+      (ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY).
+    - The `get_api_key` static method ensures keys are fetched when an instance is created,
+      allowing for dynamic updates if keys are set/changed via the frontend and environment reloaded.
     """
 
-    # We use a static method to retrieve the API keys for each LLM from the environment variables
-    # This ensures that the API keys are loaded when the class is instantiated and not just when the application is first run
-    # Without this, we'd need to restart the application to update the API keys when they are set in the front end
     @staticmethod
     def get_api_key(key_name):
         return os.environ.get(key_name)
@@ -174,17 +174,26 @@ class llmObject:
         )
 
 
-# We'll store the chat history for each session in a dictionary object.
-# This allows us to maintain the history and pass it to the LLM for follow up questions.
+# In-memory storage for chat histories.
+# A simple dictionary where keys are session IDs and values are ChatMessageHistory objects.
+# This approach is suitable for demos or single-user scenarios but lacks persistence.
+# In production, a database (like Redis, PostgreSQL) would be used.
 store = {}
 
 
-# The get_session_history function manages chat history for different sessions.
-# It takes a session ID as input and returns a ChatMessageHistory object.
-# If a session doesn't exist, it creates a new one in our dictionary.
-# This allows the system to maintain separate conversation histories for different users or threads.
-# For our use case, we only need one session, so we will use the session ID "1" for all our conversations.
+# Function to retrieve or create chat history for a given session ID.
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    """
+    Retrieves the chat history for a specific session ID from the in-memory store.
+    If the session ID does not exist, a new ChatMessageHistory object is created
+    and stored for that ID.
+
+    Args:
+        session_id: A unique identifier for the chat session.
+
+    Returns:
+        A Langchain BaseChatMessageHistory object for the given session ID.
+    """
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
@@ -213,48 +222,65 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 # We'll use LangChain components to abstract and streamline the process of creating the LLM calls
 
 
+# Core query processing function using Langchain.
+# This function orchestrates the RAG pipeline: handling history, retrieving documents,
+# generating context-aware queries, and producing the final answer.
 def query(user_query, selected_llm):
+    """
+    Processes a user query using the RAG pipeline with conversation history.
+
+    Args:
+        user_query: The query text entered by the user.
+        selected_llm: The string identifier of the LLM selected in the frontend
+                      (e.g., "GPT4o", "Claude").
+
+    Yields:
+        str: Chunks of the generated answer as they become available (streaming).
+
+    """
     try:
+        # --- 1. LLM Initialisation ---
+        # Create an instance of the LLM factory.
         llm_instance = llmObject()
-        # First we retrieve the relevant model from the llm_Object class where the name matches the selected_llm parameter which is passed from the frontend.
+        # Dynamically get the initialisation method based on the selected_llm string
+        # and call it to get the configured Langchain LLM object.
         llm = getattr(llm_instance, selected_llm)()
     except AttributeError:
         raise ValueError(f"Unsupported LLM: {selected_llm}")
 
-    # Then we initialise Pinecone and set the index name.
-    # Think of this as simply connecting to the database we created in the vector_utils.py file for content retrieval.
-    # This time, the embedding model is used to create a vector representation of the user'squery.
-    # It's important to use the same embedding model that we used when we indexed our documents, so that the query embedding
-    # can be accurately compared to the document embeddings in the vector database.
+    # --- 2. Pinecone and Retriever Setup ---
+    # Initialise Pinecone client. Requires PINECONE_API_KEY.
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    # Connect to the specific Pinecone index.
     index = pc.Index(os.getenv("PINECONE_INDEX"))
+    # Initialise the embedding model (must match the one used for indexing).
+    # Assumes OpenAI embeddings are used here. Requires OPENAI_API_KEY.
     embeddings = OpenAIEmbeddings()
+    # Create the Langchain vector store interface for Pinecone.
     vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
-    # Next we create a retriever object that uses our vector database to retrieve text chunks based on user queries.
-    # We specify search_type="similarity" and search_kwargs={"k": 5} to search for the 5 nearest neighbors in the vector database.
+    # Create a retriever from the vector store.
+    # This object handles the similarity search logic.
+    # search_type="similarity": Use standard vector similarity search.
+    # search_kwargs={"k": 5}: Retrieve the top 5 most relevant document chunks.
     retriever = vector_store.as_retriever(
         search_type="similarity", search_kwargs={"k": 5}
     )
 
-    # Then we define our condense question prompt. Note: We are just creating the prompt object here, not actually using it yet
-    # Langchain's MessagesPlaceholder retreives the chat history from the get_session_history function and stores it in the variable "chat_history"
-    # The user's input is stored in the variable "input"
-    # Both variables are injected into the CONDENSE_QUESTION_PROMPT which you can view in the templates/prompts.py file
-    # MessagesPlaceholder then stores the outputs back in our chat history dictionary
+    # --- 3. Prompt Template Definitions ---
+    # Define the prompt template for condensing a follow-up question using chat history.
+    # MessagesPlaceholder("chat_history") dynamically inserts the history.
+    # "{input}" is where the user's current query will be placed.
     condense_question_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", CONDENSE_QUESTION_PROMPT),
+            ("system", CONDENSE_QUESTION_PROMPT),  # from prompts.py
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
         ]
     )
 
-    # The qa prompt is used to create our question-answering prompt. Again, we are just creating the prompt object here, not actually using it yet
-    # This time we use the user's input, chat history and retrieved text chunks for our prompt
-    # All three variables are injected into the QUESTION_PROMPT which you can view in the templates/prompts.py file
-    # MessagesPlaceholder again stores the outputs back in our chat history dictionary
-
+    # Define the main question-answering prompt template.
+    # This prompt receives the (potentially condensed, depending on if this was the first message) question and the retrieved documents ('context').
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", QUESTION_PROMPT),
@@ -263,33 +289,27 @@ def query(user_query, selected_llm):
         ]
     )
 
-    # The document prompt is used to ensure the metadata is included in the text chunks we send to the LLM.
+    # Define how individual retrieved documents should be formatted before being added to the 'context'.
     document_prompt = ChatPromptTemplate.from_template(
         "Content: {page_content}\nSource: {source}\nAuthorUsername: {AuthorUsername}"
     )
 
-    # The history aware retriever is used to perform document retrieval from the vector database
-    # If chat history exists, it first passes the chat history and the user's question to the LLM via the condense_question_prompt we created above
-    # The LLM uses the condense_question_prompt to create a standalone question as the output
-    # The retriever is then used to perform a similarity search on our pinecone database using the new standalone question to find the 5 most relevant text chunks
-    # Note: Again, we are just creating the history aware retriever object here, not actually using it yet
+    # --- 4. Langchain Chain Construction ---
+    # Create the "history-aware retriever" chain.
+    # This chain takes the latest user input and chat history.
+    # If history exists, it first calls the LLM with `condense_question_prompt`
+    # to generate a standalone question.
+    # Then, it uses this standalone question (or the original input if no history)
+    # to query the `retriever` for relevant documents.
     history_aware_retriever = create_history_aware_retriever(
         llm, retriever, condense_question_prompt
     )
 
-    # So far, we've created our prompts and our retriever objects but we've not actually performed any actions with them
-    # We'll use Langchain's chains functionality to do this.
-    # A chain is just a sequence of actions that are executed in order.
-    # Chains themselves can be linked together to create more complex sequences.
-    # For our application, we will create three chains each linked together to take the following actions:
-    # 1. Retrieve user question & chat history (if exists) > 2. Send to LLM for condensed question (skip if no history) > 3. Retrieve top 5 most relevant text chunks based on the question > 4. Pass the question and chunks to the LLM for final response
-
-    # QA chain: We build from bottom to top. Starting with the final call to the LLM, this chain uses the qa_prompt we defined above which takes the user's question, chat history
-    # and context (our top 5 most relevant text chunks) and passes them to the LLM using the create_stuff_documents method
-    # The create_stuff_documents method adds the full content of our retrieved text chunks to the prompt and passes it to the LLM
-    # Other document chain methods (map-reduce, refine etc) perform pre-processing of the text chunks before adding them to the prompt in order to reduce the context window
-    # We're using the create_stuff_documents method here because we only have a few text chunks to add to the prompt
-    # This covers Action 4. Pass the question and chunks to the LLM for final response
+    # Create the "question-answering" chain component.
+    # This chain takes the input question and the retrieved documents ('context').
+    # `create_stuff_documents_chain` formats the documents using `document_prompt`
+    # and "stuffs" them into the `qa_prompt` under the `document_variable_name` ('context').
+    # It then calls the LLM with the combined prompt to generate the final answer.
 
     qa_chain = create_stuff_documents_chain(
         llm,
@@ -298,16 +318,15 @@ def query(user_query, selected_llm):
         document_prompt=document_prompt,
     )
 
-    # The retrieval chain is used to perform a similarity search in the vector database
-    # If chat history exists, it first passes the chat history and the user's question to the LLM via the condense_question_prompt we created above
-    # The LLM uses the condense_question_prompt to create a standalone question as the output
-    # The retriever is then used to perform a similarity search using the new standalone question to find the 5 most relevant text chunks
-    # It passes these text chunks to the QA chain we created earlier.
-    # This covers Action 2 & 3. Send to LLM for condensed question (skip if no history) > Retrieve top 5 most relevant text chunks based on the question
+    # Combine the history-aware retriever and the QA chain into a single retrieval chain.
+    # This chain first runs `history_aware_retriever` to get documents,
+    # then passes the original input and the retrieved documents to `qa_chain`.
     retrieval_chain = create_retrieval_chain(history_aware_retriever, qa_chain)
 
-    # The conversational_rag_chain takes the users input, retrieves the chat history and passes them to the retrieval chain above
-    # This covers Action 1. Retrieve user question & chat history
+    # Wrap the retrieval chain with history management.
+    # `RunnableWithMessageHistory` automatically handles loading history using `get_session_history`,
+    # passing it to the chain under the `history_messages_key`,
+    # and saving the input (`input_messages_key`) and output (`output_messages_key`) back to the history.
     conversational_rag_chain = RunnableWithMessageHistory(
         retrieval_chain,
         get_session_history,
@@ -316,22 +335,25 @@ def query(user_query, selected_llm):
         output_messages_key="answer",
     )
 
-    # Brining it all together, we call the conversational_rag_chain with the user's input and a session ID of 1 (for the chat history)
-    # We use the stream method to return the response token by token, rather than waiting until the entire response is generated.
-    # Remember, the LLM's job is simply to predict the next token in a sequence. The Stream method allows us to view this process in real-time.
+    # --- 5. Chain Execution and Streaming ---
+    # Invoke the complete chain with the user's query and a session ID.
+    # The session ID "1" is used here for simplicity, assuming a single conversation thread.
+    # Using `.stream()` executes the chain and yields results incrementally.
     response = conversational_rag_chain.stream(
         {"input": user_query}, {"configurable": {"session_id": "[1]"}}
     )
 
-    # Yielding the response allows us to display the response to the user token by token
-    # This improves the user experience by allowing them to see the response as it builds up, rather than waiting for the entire response to be generated.
+    # Iterate through the stream generator.
+    # Each chunk might contain different parts of the chain's execution.
+    # We are interested in the chunks containing the final 'answer'.
     for chunk in response:
         if "answer" in chunk:
             yield chunk["answer"]
 
 
-# This little helper function allows us to reload the environment variables when we make changes in the front end.
-# This ensures that any changes to the environment variables, like setting the API keys, are reflected immediately.
+# Helper function to reload environment variables from the .env file.
+# Useful if API keys or other settings are updated via a frontend interface
+# without restarting the entire application server.
 def reload_env_variables():
     load_dotenv(ENV_PATH, override=True)
     return "Environment variables reloaded."
