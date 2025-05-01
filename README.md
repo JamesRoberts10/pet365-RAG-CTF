@@ -10,6 +10,24 @@ Building this Retrieval-Augmented Generation (RAG) application served as a hands
 
 ![FlowChart](images/ProcessFlow.png)
 
+## How It Works
+This application implements a Retrieval-Augmented Generation (RAG) pattern to answer questions based on a set of documents (in this case, PDFs related to a pet shop, potentially with some surprises!).
+
+1.  **Indexing:**
+    * Documents (PDFs in the `ragdocs` directory) are loaded, cleaned, and split into smaller text chunks (`vector_utils.py`).
+    * Each text chunk is converted into a numerical vector (embedding) using an AI model (OpenAI's embedding model`).
+    * These embeddings, along with the original text chunks and metadata, are stored in a vector database (Pinecone).
+
+2.  **Querying (Runtime Process):**
+    * The user interacts via a web interface (Gradio - `frontpage.py`).
+    * API keys for the selected LLM are managed via environment variables and the `.env` file (`api_utils.py`).
+    * When a user sends a query (`ai_utils.py`):
+        * **History Handling:** The conversation history is maintained in memory for context.
+        * **Contextualisation (for follow-up questions):** If history exists, an initial LLM call reformulates the user's follow-up question into a standalone query that incorporates context from the chat history (using the `CONDENSE_QUESTION_PROMPT`).
+        * **Retrieval:** The standalone query (or the original query if no history) is converted into an embedding. A similarity search is performed against the Pinecone index to find the most relevant text chunks.
+        * **Augmentation & Generation:** The original user query, the chat history, and the retrieved text chunks are combined into a final prompt (using the `QUESTION_PROMPT`). This combined prompt is sent to the selected LLM (e.g., GPT, Claude, Gemini).
+        * **Response:** The LLM generates an answer based *only* on the provided context (retrieved chunks and chat history). The response is streamed back to the user interface.
+
 ## Capture the Flag Exercise
 
 The aim of this Capture the Flag exercise is to explore the exploitation of generative AI applications. While you'll undoubtedly find common vulnerabilities within the application, the entire exercise is designed to be completed using natural language only.
@@ -42,25 +60,6 @@ Clues:
 - Flag 3 - Bit of a downgrade
 - Flag 4 - Mark Zuckerberg's data
 - Flag 5 - HR will be livid
-  
-
-## How It Works
-This application implements a Retrieval-Augmented Generation (RAG) pattern to answer questions based on a set of documents (in this case, PDFs related to a pet shop, potentially with some surprises!).
-
-1.  **Indexing:**
-    * Documents (PDFs in the `ragdocs` directory) are loaded, cleaned, and split into smaller text chunks (`vector_utils.py`).
-    * Each text chunk is converted into a numerical vector (embedding) using an AI model (OpenAI's embedding model`).
-    * These embeddings, along with the original text chunks and metadata, are stored in a vector database (Pinecone).
-
-2.  **Querying (Runtime Process):**
-    * The user interacts via a web interface (Gradio - `frontpage.py`).
-    * API keys for the selected LLM are managed via environment variables and the `.env` file (`api_utils.py`).
-    * When a user sends a query (`ai_utils.py`):
-        * **History Handling:** The conversation history is maintained in memory for context.
-        * **Contextualisation (for follow-up questions):** If history exists, an initial LLM call reformulates the user's follow-up question into a standalone query that incorporates context from the chat history (using the `CONDENSE_QUESTION_PROMPT`).
-        * **Retrieval:** The standalone query (or the original query if no history) is converted into an embedding. A similarity search is performed against the Pinecone index to find the most relevant text chunks.
-        * **Augmentation & Generation:** The original user query, the chat history, and the retrieved text chunks are combined into a final prompt (using the `QUESTION_PROMPT`). This combined prompt is sent to the selected LLM (e.g., GPT, Claude, Gemini).
-        * **Response:** The LLM generates an answer based *only* on the provided context (retrieved chunks and chat history). The response is streamed back to the user interface.
 
   
 
