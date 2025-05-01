@@ -13,41 +13,46 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
 """
-This module contains the code for indexing our documents into Pinecone.
+# This module is responsible for indexing the source documents into the Pinecone vector database.
+# The process involves breaking down documents, generating vector embeddings, and storing them.
 
-Key Concepts:
-
-1. Chunking:
-   Documents are split into smaller text chunks before processing. This approach will improve later query 
-   response accuracy by allowing for the retrieval of only the most relevant data segments for a given query.
-
-2. Embedding:
-   Our text chunks are converted into numerical vector representations, which form the bases of our 
-   natural language-based similarity searches. Each chunk is represented as a list of numbers (a vector).
-   These numbers correspond to coordinates in a high-dimensional graph, where similar words or phrases 
-   are represented by vectors that are close together.
-    Example:
-        "cybersecurity" might be represented as [0.8, 0.6, 0.2...]
-        "hacking" might be [0.7, 0.5, 0.3...]
-        "baking" might be [0.1, 0.2, 0.9...]
-
-   In this example, "cybersecurity" and "hacking" have more similar vectors compared to "baking".
-   
-   We're using OpenAI's embedding api for this, which takes a text input and returns a numerical 
-   representation of the text.
-
-3. Pinecone Storage:
-   Both the vector embeddings and the original text chunks are stored in Pinecone. We'll use this 
-   cloud-based solution because it offers quick setup and eliminates the need for local database management.
+# Key Concepts:
+#
+# 1. Chunking:
+#    - Documents are initially segmented into smaller, more manageable text chunks.
+#    - Rationale: Processing smaller chunks improves the relevance of search results later.
+#      Instead of retrieving entire large documents, the system can pinpoint and return
+#      only the specific segments most relevant to a user's query.
+#
+# 2. Embedding:
+#    - Each text chunk is converted into a numerical vector representation, known as an "embedding".
+#    - These vectors are designed to capture the semantic meaning of the text, forming the basis
+#      for performing similarity searches.
+#    - How it works: Think of the vector as coordinates placing the chunk within a high-dimensional
+#      "semantic space". Text chunks with similar meanings will have vectors that are
+#      mathematically closer together in this space.
+#    - Example:
+#      (Simplified vectors for illustration)
+#        "cybersecurity" -> [0.8, 0.6, 0.2, ...]
+#        "hacking"       -> [0.7, 0.5, 0.3, ...]
+#        "baking"        -> [0.1, 0.2, 0.9, ...]
+#      Here, the vectors for "cybersecurity" and "hacking" have a greater similarity
+#      (closer proximity) compared to "baking".
+#    - I'm using OpenAI's embedding API to generate these vector representations from the text chunks.
+#
+# 3. Pinecone Storage:
+#    - The resulting vector embeddings, along with their corresponding original text chunks,
+#      are stored together in Pinecone.
+#    - Pinecone acts as the cloud-based vector database. I choose it because it avoids
+#      the need to manage vector database infrastructure locally.
 
 """
-
 
 # TIP: If you're struggling to read the code, copy it into ChatGipity and ask it to explain it to you (Don't do this with work code)
 
 
-# First we initialize Pinecone, set the index name and the embedding model.
-# An index is just a database containing text chunks and their corresponding vectors.
+# First, initialise Pinecone, define the index name, and set up the embedding model.
+# An index, in this context, is effectively a database holding the text chunks and their corresponding vectors.
 pc = Pinecone(api_key=PINECONE_API_KEY)
 embeddings = OpenAIEmbeddings()
 index_name = "pet365"
@@ -83,19 +88,34 @@ def clean_text(text):
     return text.strip()
 
 
-# The first step for indexing our documents is to load the text from each PDF file, clean the text and split it into smaller chunks.
-# We use langchain's PyPDFLoader to load the content of PDF files, our function clean_text to remove unwanted characters and langchain's RecursiveCharacterTextSplitter to split the text into smaller chunks.
+# Loads text from PDF files within a directory, cleans it, and splits it into manageable chunks.
+# This function runs the initial document preparation steps before embedding and indexing.
+# It uses Langchain's PyPDFLoader for loading, the `clean_text` function for tidying,
+# and Langchain's RecursiveCharacterTextSplitter for chunking.
 def prepare_documents(directory: str) -> list[Document]:
+    """
+    Loads PDF documents from a directory, cleans their text content,
+    and splits them into smaller chunks.
+
+    Args:
+        directory: The path to the directory containing PDF files.
+
+    Returns:
+        A list of Langchain Document objects, where each object represents a chunk
+        of text ready for embedding. Returns an empty list if no documents are loaded
+        or processed successfully.
+    """
     # This list will store the documents after they have been cleaned and split into smaller chunks.
     documents = []
-    # We use os.listdir to get a list of all files in the specified directory.
-    # For each PDF file, we use PyPDFLoader to load the content and store the resulting list of page objects in file_documents.
-    # We then loop through each page, clean the text using our clean_text function and add it to the documents list.
+    # Iterate through all files in the specified directory.
     for filename in os.listdir(directory):
         if filename.endswith(".pdf"):
+            # Construct the full path to the PDF file.
             file_path = os.path.join(directory, filename)
             try:
+                # Use PyPDFLoader to load the content page by page.
                 loader = PyPDFLoader(file_path)
+                # file_documents contains a list of Langchain Document objects, one per page.
                 file_documents = loader.load()
                 print(
                     f"Successfully loaded {len(file_documents)} pages from: {filename}"
@@ -108,6 +128,7 @@ def prepare_documents(directory: str) -> list[Document]:
                     )
                     for doc in file_documents
                 ]
+                # Add the cleaned page documents to the main list.
                 documents.extend(cleaned_documents)
 
                 # Print metadata for each cleaned document
@@ -127,10 +148,12 @@ def prepare_documents(directory: str) -> list[Document]:
 
     print(f"Total documents loaded: {len(documents)}")
 
-    # Next we'll use RecursiveCharacterTextSplitter to split the documents into smaller chunks.
-    # We set the chunk size to 512 characters and the overlap to 50 characters.
-    # It's important to have an overlap to prevent text from being cut off abruptly.
-    # The "separators" argument instructs the splitter to look for any of the specified strings in the text to indicate where the chunks should be split.
+    # Now, split the combined text content from all pages into smaller chunks.
+    # RecursiveCharacterTextSplitter tries to split based on semantic boundaries first (paragraphs, sentences).
+    # chunk_size: Aim for chunks of roughly this many characters.
+    # chunk_overlap: Include some characters from the end of the previous chunk at the start of the next one.
+    # This helps maintain context across chunk boundaries.
+    # separators: Characters/sequences the splitter prioritises for making splits (e.g., double newline first).
     # Basically, we're saying: Split the text into 512 character chunks, but look for a clean delimiter to split at if possible.
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=512,
@@ -143,19 +166,30 @@ def prepare_documents(directory: str) -> list[Document]:
     return split_docs
 
 
-# Now to index the documents into Pinecone.
-# We call the prepare_documents function on our directory of PDF files to get a list of chunk objects from the content of the PDFs.
-# We then use PineconeVectorStore to index the documents into Pinecone.
+# Main function running the indexing process into Pinecone.
+# It first prepares the document chunks using prepare_documents, then uses
+# PineconeVectorStore.from_documents to generate embeddings and upload everything.
 def index_documents(directory: str) -> bool:
+    """
+    Prepares documents from a directory and indexes them into Pinecone.
+
+    Args:
+        directory: The path to the directory containing source documents (PDFs).
+
+    Returns:
+        True if indexing was initiated successfully, False otherwise (e.g., no documents found).
+    """
     print(f"Starting document indexing process for directory: {directory}")
-    # call the prepare_documents function on our directory to get a list of chunk objects
+    # Step 1: Load, clean, and chunk the documents from the specified directory.
     documents = prepare_documents(directory)
 
     if not documents:
         print("No documents to index.")
         return False
 
-    # Index the documents into Pinecone
+    # Step 2: Generate embeddings and index the chunks into Pinecone.
+    # PineconeVectorStore.from_documents handles both embedding generation (using the provided 'embeddings' object)
+    # and uploading the text chunks and their vectors into the specified Pinecone 'index_name'.
     PineconeVectorStore.from_documents(
         documents=documents,
         embedding=embeddings,

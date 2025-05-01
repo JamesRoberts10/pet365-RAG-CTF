@@ -42,7 +42,7 @@ Key Concepts:
 
 3. Chat History: 
    The key difference in using LLM APIs over their chat interfaces is that they do not handle history for us. We must do this application side.
-   To achieve this, we'll record all interactions in a chat history objectand send the full chat history with the user's query to the LLM for each interaction.
+   To achieve this, we'll record all interactions in a chat history object and send the full chat history with the user's query to the LLM for each interaction.
    For simplicity, we'll store the chat history in memory rather than in a database.
    Note that in a production environment, we'd want to use a database to store the chat history in order to maintain persistence across sessions.
 
