@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Building this Retrieval-Augmented Generation (RAG) application served as a hands-on learning exercise, allowing me to explore not only the architecture of RAG systems but also the emerging security vulnerabilities specific to AI. This Capture The Flag (CTF) exercise is a direct result of that exploration, designed to share those learnings in an interactive format. The best way to understand technology and its risks is often to build and experiment with it directly.
+Building this Retrieval-Augmented Generation (RAG) application served as a hands-on learning exercise, allowing me to explore not only the architecture of RAG systems but also the emerging security vulnerabilities specific to AI. This Capture The Flag (CTF) exercise is a direct result of that exploration, designed to share those learnings in an interactive format. 
 
 
 
