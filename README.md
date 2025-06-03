@@ -1,4 +1,4 @@
-![FlowChart](images/pet365logo.png)
+![logo](images/Pet365Logo.png)
 
 # pet365 RAG CTF
 
