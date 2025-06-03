@@ -1,5 +1,4 @@
 # pet365 RAG CTF
-![logo](images/Pet365Logo.png)
 
 ## Introduction
 
